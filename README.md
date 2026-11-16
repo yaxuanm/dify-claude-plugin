@@ -4,22 +4,28 @@ Build, test and publish [Dify](https://dify.ai) apps without leaving Claude Code
 
 Connect your Dify workspace (Dify Cloud or self-hosted), describe the app you need in plain words, and Claude builds a working Workflow or Chatflow app in your workspace, runs test cases against it, and publishes it when you say yes.
 
-> Status: prototype (v0.1.0). Not yet listed in any official plugin directory.
+> Status: prototype (v0.2.0). Not yet listed in any official plugin directory.
 
 ## What you get
 
-| Component | What it does |
-| --- | --- |
-| `/dify:setup` | Guided connection: installs `difyctl` if needed, signs you in with a browser device code, and pins a workspace. |
-| `/dify:new-app <description>` | From a description to a tested app: short spec, plan, build, acceptance tests, then publish on your yes. |
-| `difyctl` skill | Dify's official agent skill for the `difyctl` CLI. Teaches Claude to discover and run every operation your Dify server publishes: apps, runs, DSL import/export, plugins, models, knowledge bases, workspace skills. |
+| Component | What it does | Works on |
+| --- | --- | --- |
+| `/dify:setup` | Checks your server, installs `difyctl`, signs you in with a browser device code, pins a workspace. | Self-hosted with `OPENAPI_ENABLED=true` |
+| `/dify:new-app <description>` | Description to tested, published app with no trip to the console: spec, plan, build, acceptance tests, publish on your yes. Falls back to `build-dsl` when difyctl cannot connect. | Self-hosted with `OPENAPI_ENABLED=true` |
+| `/dify:build-dsl <description>` | Writes the app as a Dify DSL file and checks it offline; you import it in one click. | Any Dify, including Cloud |
+| `/dify:test-app` | Runs acceptance cases against a published app through the Service API, reads failed runs and logs, suggests fixes. | Any Dify, including Cloud |
+| `/dify:knowledge` | Creates a knowledge base from local files and tests retrieval through the Knowledge API. | Any Dify, including Cloud |
+| `/dify:connect-app` | Turns a published Dify app into a tool Claude Code can call, through the app's built-in MCP server. | Any Dify, including Cloud |
+| `difyctl` skill | Dify's official agent skill for the `difyctl` CLI: every operation the server publishes. | Self-hosted with `OPENAPI_ENABLED=true` |
 
 Claude also uses these skills on its own when you mention Dify or ask to build an AI app, chatbot, RAG Q&A or workflow.
 
 ## Requirements
 
 - Claude Code (CLI, desktop or IDE extension).
-- A Dify account: [Dify Cloud](https://cloud.dify.ai) or a self-hosted / Enterprise server whose version ships `difyctl`.
+- A Dify account: [Dify Cloud](https://cloud.dify.ai) or a self-hosted / Enterprise server.
+- For the fully automated flow: a recent self-hosted Dify with `OPENAPI_ENABLED=true` in the API service's environment (it is off by default). Without it, `build-dsl`, `test-app`, `knowledge` and `connect-app` still work.
+- Python 3 for the offline DSL check and the API helper (`build-dsl` needs PyYAML).
 - macOS, Linux or Windows. `difyctl` is installed for you on first use (one binary in `~/.local/bin`).
 
 ## Install
@@ -56,11 +62,12 @@ The plugin drives Dify through [`difyctl`](https://github.com/langgenius/dify/tr
 
 - Sign-in uses the OAuth device flow. Tokens are stored by `difyctl` in your OS keychain (or a `0600` file where there is none), never in the plugin or your project.
 - Working files for each app (`spec.md`, `plan.md`, `app.yml`) are kept in `difyctl/<app-slug>/` in your current folder.
+- Service API and Knowledge API keys are typed into your own terminal and stored in `~/.config/dify-claude-plugin/keys.json` (mode `0600`); they never go through the chat.
 - Nothing is published, deleted or opened to the public without your explicit yes.
 
 ## Privacy
 
-The plugin itself collects no data and sends nothing anywhere. `difyctl` talks only to the Dify server you sign in to; that server's privacy policy applies (Dify Cloud: <https://dify.ai/privacy>). The installer downloads `difyctl` from GitHub releases of `langgenius/dify`.
+The plugin collects no data of its own. `difyctl` and the plugin's scripts talk only to the Dify server you sign in to or configure (files you upload with `/dify:knowledge` go to that server's knowledge base); that server's privacy policy applies (Dify Cloud: <https://dify.ai/privacy>). The installer downloads `difyctl` from GitHub releases of `langgenius/dify`.
 
 ## Development
 
@@ -77,8 +84,12 @@ Layout:
 .claude-plugin/marketplace.json   makes this repo installable as a marketplace
 skills/setup/                     /dify:setup
 skills/new-app/                   /dify:new-app
+skills/build-dsl/                 /dify:build-dsl (templates + offline DSL reference)
+skills/test-app/                  /dify:test-app
+skills/knowledge/                 /dify:knowledge
+skills/connect-app/               /dify:connect-app
 skills/difyctl/                   official difyctl skill (synced from upstream)
-scripts/                          status check, installer wrapper, upstream sync
+scripts/                          difyctl status/installer, DSL validator, Service/Knowledge API helper, upstream sync
 assets/icon.png                   directory icon
 ```
 

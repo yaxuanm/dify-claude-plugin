@@ -14,6 +14,8 @@ The user's request: $ARGUMENTS
 
 Run `difyctl login --resume --json`. If difyctl is missing or there is no `email` in the result, follow the `setup` skill first, then come back here.
 
+If the user is on Dify Cloud or their server does not have `OPENAPI_ENABLED` on (the `setup` skill finds out), do not stop: build the app as an importable file with the `build-dsl` skill instead, and tell the user in one line why.
+
 ## 1. Follow difyctl's build method, sized for a first app
 
 The `difyctl` skill in this plugin holds Dify's official build method: read its `references/build-workflow.md` now and follow it. It has four phases (spec, plan, build, hand over), each with a human gate. Do not skip a gate. Its rules win over anything below.

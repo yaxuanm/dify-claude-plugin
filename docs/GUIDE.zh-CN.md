@@ -1,6 +1,6 @@
 # Dify Claude Code 插件：安装测试与上架说明
 
-状态：v0.1.0 原型，尚未提交任何官方目录。
+状态：v0.2.0 原型，尚未提交任何官方目录。
 
 ## 一、插件里有什么
 
@@ -87,6 +87,31 @@ Claude Code 有三层分发，别混在一起说：
 - [ ] **许可证**：本仓库用 Apache-2.0。复制进来的 difyctl skill 来自 langgenius/dify，该仓库是“修改版 Apache 2.0”（Dify Open Source License），需要确认可以这样再分发，或者改成安装时再执行 `difyctl install skills`。
 - [ ] **difyctl 正式发布**：确认 difyctl 已经随 Dify Release 稳定发布，并支持 Cloud 和主流自部署版本，否则用户装完插件也走不通。
 - [ ] **维护人**：上游 skill 更新时同步、改版本号、处理 issue。
+
+## v0.2 新增：difyctl 之外的能力
+
+| 命令 | 作用 | 适用 |
+| --- | --- | --- |
+| `/dify:build-dsl <需求>` | 生成 Dify DSL 文件并离线校验，导入后即可运行 | 所有 Dify，含 Cloud |
+| `/dify:test-app` | 用 Service API 对已发布应用跑验收用例，读失败运行和日志，给出修改建议 | 所有 Dify，含 Cloud |
+| `/dify:knowledge` | 用 Knowledge API 把本地文件建成知识库，并测召回 | 所有 Dify，含 Cloud |
+| `/dify:connect-app` | 通过应用自带的「MCP 服务」把已发布应用接成 Claude Code 的工具 | 所有 Dify，含 Cloud |
+
+### 能不能完全不进控制台
+
+- **自部署，开启 `OPENAPI_ENABLED=true`**：可以。difyctl 走的 `/openapi/v1` 能建应用、导入 DSL、跑草稿、单节点测试、发布前检查、发布、开关 Web App 和 Service API、装插件。唯一手动步骤是登录时在浏览器授权页点一次。
+- **Dify Cloud**：要看 Cloud 是否打开 `OPENAPI_ENABLED`。源码里 `/openapi/v1` 已经有 Cloud 专用的套餐额度检查（`CheckAppQuota`），说明是按 Cloud 可用设计的，需要内部确认上线时间。在那之前，Cloud 用户需要进控制台做三件事：导入 DSL、创建 API Key、开启应用的 MCP 服务。
+- **不建议**用控制台内部接口（伪造 JWT、账号密码、复制浏览器 token）做公开版：不是公开接口，随时可能变，目录审核也可能当作绕过认证。
+
+### 为什么 Console API 没放进公开版
+
+`yaxuanm/dify-ce-workflow-autobuilder-skill` 里的 `dify_ce_console.py` 是 `docker exec` 读 `SECRET_KEY` 后自签控制台 JWT。它在本地 CE 开发环境里很好用，但需要服务器 shell 权限，Cloud 不可用，也不适合进公开目录。可以保留为“本地 CE 开发模式”。
+
+### 已验证
+
+- `validate_dsl.py` 用 Dify 仓库里 36 个真实 DSL 文件跑过，没有误报。
+- `/dify:build-dsl` 端到端试跑：生成了带 LLM、代码、条件分支的“客户反馈情绪分析”工作流，校验通过。还没在真实 Dify 中导入。
+- `dify_api.py` 的应用信息、workflow 运行、chat 流式结果合并、验收用例判定，在本地模拟服务器上测过；知识库上传没有对真实服务器测过。
 
 ## 五、后续可以加的
 
