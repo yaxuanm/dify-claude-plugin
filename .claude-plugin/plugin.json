@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
+  "name": "dify",
+  "displayName": "Dify",
+  "version": "0.1.0",
+  "description": "Build, test and publish Dify apps from Claude Code. Connect a Dify workspace (Cloud or self-hosted), describe what you need, and get a working Workflow or Chatflow app, using the official difyctl CLI.",
+  "author": {
+    "name": "Dify",
+    "url": "https://dify.ai"
+  },
+  "homepage": "https://dify.ai",
+  "repository": "https://github.com/yaxuanm/dify-claude-plugin",
+  "license": "Apache-2.0",
+  "keywords": ["dify", "workflow", "chatflow", "llm-apps", "agents", "rag", "automation", "difyctl"],
+  "icon": "./assets/icon.png",
+  "documentationUrl": "https://docs.dify.ai",
+  "supportUrl": "https://github.com/yaxuanm/dify-claude-plugin/issues",
+  "privacyPolicyUrl": "https://dify.ai/privacy",
+  "termsOfServiceUrl": "https://dify.ai/terms",
+  "skills": "./skills/"
+}

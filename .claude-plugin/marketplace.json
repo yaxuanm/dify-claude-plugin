@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "dify-plugins",
+  "owner": {
+    "name": "Dify",
+    "url": "https://dify.ai"
+  },
+  "metadata": {
+    "description": "Official Dify plugins for Claude Code."
+  },
+  "plugins": [
+    {
+      "name": "dify",
+      "source": "./",
+      "description": "Build, test and publish Dify apps from Claude Code with the official difyctl CLI.",
+      "version": "0.1.0",
+      "category": "development",
+      "tags": ["dify", "workflow", "chatflow", "llm-apps", "agents"]
+    }
+  ]
+}

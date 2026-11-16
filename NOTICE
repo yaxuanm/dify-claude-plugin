@@ -1,0 +1,11 @@
+Dify plugin for Claude Code
+Copyright 2026 LangGenius, Inc.
+
+This product includes the difyctl agent skill (skills/difyctl/) from
+https://github.com/langgenius/dify, which is distributed under the Dify Open
+Source License (a modified Apache License 2.0; see that repository's LICENSE).
+Confirm with the Dify team that redistributing it here is covered before a
+public release.
+difyctl skill commit: 0ba3c9d76887b6c89c943abaab87f8d86c27d612
+
+"Dify" and the Dify logo are trademarks of LangGenius, Inc.
