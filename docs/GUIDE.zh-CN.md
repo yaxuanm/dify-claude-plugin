@@ -1,6 +1,6 @@
 # Dify Claude Code 插件：安装、测试与上架说明
 
-状态：v0.3.0 原型，尚未提交任何官方目录。
+状态：v0.3.1 原型，尚未提交任何官方目录。
 
 ## 一、插件能做什么
 
@@ -21,15 +21,14 @@
 `/dify:setup` 会先访问服务器上两个不需要登录的地址：
 
 - `/openapi/v1/_version` 返回 200：服务器开了官方接口（`OPENAPI_ENABLED=true`）→ **路径 A：difyctl**。浏览器授权页点一次“授权”即可，之后全部由 difyctl 完成。
-- 否则 → **路径 B：控制台接口**（目前 Dify Cloud 都走这条）。用户在自己的终端里运行一次登录命令，输入邮箱和密码。
+- 否则 → **路径 B：控制台接口**（目前 Dify Cloud 都走这条）。插件打开一个临时浏览器窗口，进入 Dify 登录页，用户正常登录。
 
 路径 B 的细节：
 
-- 只支持**邮箱 + 密码**登录。Cloud 的邮箱验证码在发送前强制要求 Cloudflare 人机验证（源码 `EmailCodeSendPayload`："Required at runtime for Dify Cloud"），命令行无法通过，插件也不会绕过。Google / GitHub 登录需要浏览器跳转，同样不支持。
-- 用验证码或 Google 注册、没设过密码的账号：在 Dify 里点头像 → 账号 → “设置密码”，设一次即可。
-- 密码只在用户自己的终端输入，不显示、不保存、不经过聊天；保存的只有会话 cookie，位置是 `~/.config/dify-claude-plugin/`（仅本人可读）。会话过期会自动续期。
-- 自部署但没开官方接口时，也走路径 B；如果服务器允许，可以用邮箱验证码登录（`--method email-code`）。
-- 风险：控制台接口是 Dify 网页自用的内部接口，没有兼容性承诺，Dify 升级后可能需要跟着改。Cloud 一旦打开 `/openapi/v1`，插件会自动切到路径 A。
+- **浏览器登录（默认）**：插件用你电脑上的 Chrome / Edge / Brave / Chromium 打开一个临时窗口，进入 Dify 登录页。你用任何方式登录都可以，验证码、Google、GitHub、SSO 都行，人机验证也是你本人在浏览器里过的。登录成功后，插件只取走会话 cookie 并关闭窗口。窗口用的是一次性配置，不会碰你平时用的浏览器和里面的登录状态。会话存在 `~/.config/dify-claude-plugin/`，只有你自己能读，过期了会自动续期。
+- 为什么不直接在命令行登录：Dify Cloud 关闭了密码登录（`enable_email_password_login: false`，你查到的）；邮箱验证码发送前要求 Cloudflare 人机验证；Google / GitHub 需要浏览器跳转。所以在 Cloud 上，浏览器登录是唯一可行的方式。
+- 备用方式：自部署服务器如果开着密码或验证码登录，又没有桌面环境（比如远程服务器），可以在自己的终端里用 `--method password` 或 `--method email-code` 登录。
+- 风险：控制台接口是 Dify 网页自用的内部接口，没有兼容性承诺，Dify 升级后可能需要跟着改。Cloud 一旦打开 `/openapi/v1`，插件会自动切到路径 A，用官方的设备授权登录。
 
 路径 B 复用了 `yaxuanm/dify-ce-workflow-autobuilder-skill` 里的控制台调用（导入和确认、草稿运行和解析事件、发布、开启 API、创建 API Key），只把原来 `docker exec` 读 `SECRET_KEY` 自签 JWT 的登录换成了账号登录，所以 Cloud 和远程自部署都能用。
 
@@ -49,13 +48,12 @@ claude plugin install dify@dify-plugins
 
 ### 验收步骤（Cloud）
 
-1. 浏览器打开 <https://cloud.dify.ai/console/api/system-features>，确认 `enable_email_password_login` 是 `true`。
-2. 确认你的 Cloud 账号设置过密码。
-3. 在 Claude Code 里运行 `/dify:setup`，服务器选 Dify Cloud。Claude 应该说明会走“控制台登录”，并给你一条登录命令。
-4. 另开一个终端运行这条命令，输入邮箱和密码，回到 Claude Code 回复“done”。Claude 应该显示你的账号和工作区。
-5. 运行 `/dify:new-app 一个工作流：输入客户反馈，输出情绪（正面/负面/中性）和一句话摘要`。依次检查：先给 spec 让你确认；导入后给出 app_id；跑草稿测试并给出逐条结果；发布前一定问你；同意后返回 Web App 链接和 API Key 别名（Key 本身不显示）。
-6. 在 Dify 控制台里核对一下（只是验收，正常使用时不需要）：应用已存在、已发布、API Key 已创建。
-7. 记录每一步的耗时和卡点。
+1. 确认电脑上装了 Chrome（或 Edge / Brave）。
+2. 在 Claude Code 里运行 `/dify:setup`，服务器选 Dify Cloud。Claude 应该说明会走“浏览器登录”，接着弹出一个新的浏览器窗口，打开 Dify 登录页。
+3. 在这个窗口里正常登录。登录成功后窗口会自动关闭，Claude 显示你的账号和工作区。
+4. 运行 `/dify:new-app 一个工作流：输入客户反馈，输出情绪（正面/负面/中性）和一句话摘要`。依次检查：先给 spec 让你确认；导入后给出 app_id；跑草稿测试并给出逐条结果；发布前一定问你；同意后返回 Web App 链接和 API Key 别名（Key 本身不显示）。
+5. 在 Dify 控制台里核对一下（只是验收，正常使用时不需要）：应用已存在、已发布、API Key 已创建。
+6. 记录每一步的耗时和卡点。
 
 ### 验收步骤（自部署）
 
@@ -73,13 +71,14 @@ claude plugin validate . --profile directory --strict
 
 - 目录提交检查（`--profile directory --strict`）通过，没有警告。
 - `validate_dsl.py` 用 Dify 仓库里 36 个真实 DSL 跑过，没有误报。
-- `dify_console.py` 在模拟服务器上跑通了整套流程：探测、终端密码登录（cookie 和 CSRF）、access token 过期后自动续期、查模型、导入（含版本确认）、草稿运行和用例测试、发布、建 API Key 并存进本机 key 库、Web App 链接、登出。
+- 浏览器登录在本地 Chromium 上测过：打开登录页、等待登录、取 cookie、关闭窗口、清理临时配置都正常。
+- `dify_console.py` 在模拟服务器上跑通了整套流程：探测、登录（cookie 和 CSRF）、access token 过期后自动续期、查模型、导入（含版本确认）、草稿运行和用例测试、发布、建 API Key 并存进本机 key 库、Web App 链接、登出。
 - 让 Claude 端到端跑了一遍 `/dify:new-app`：它查了模型、写了 spec 和用例、生成 DSL 并校验、导入、跑了草稿测试。测试没通过时，它停在发布前，并指出是服务器的问题。这是对的：模拟服务器对任何输入都返回同一个结果。
 
 未验证（需要你用真实账号测）：
 
 - **以上所有调用都没有在真实的 Dify Cloud 或自部署上跑过。** 请求格式取自 Dify 当前源码和你仓库里在 CE 上验证过的脚本，但字段细节可能还要调整。
-- Cloud 是否开着密码登录、Cloud 登录后的 cookie 名称和域名是否和源码一致。
+- Cloud 登录后的 cookie 名称和域名是否和源码一致；Cloud 前面的 Cloudflare 会不会拦截插件这种非浏览器发出的请求。
 - difyctl 的真实下载和设备码登录。
 - 知识库文件上传。
 

@@ -12,8 +12,10 @@ easy to read.
 
 Setup
   detect <server-url>              which path works: openapi (difyctl) or console, and which logins
-  login [<server-url>] [--method password|email-code]
-                                   interactive: run in your own terminal. Stores session cookies only.
+  login [<server-url>] [--method browser|password|email-code]
+                                   browser (default): opens a temporary browser window on the Dify
+                                   sign-in page; any sign-in method works. password/email-code:
+                                   interactive, run in your own terminal. Stores session cookies only.
   logout | whoami
   workspaces | use-workspace <id>
 
@@ -212,12 +214,11 @@ def cmd_detect(a):
         result["next"] = "use the difyctl skill: difyctl login --server <server> --no-browser --no-wait"
     elif result["console_reachable"]:
         result["path"] = "console"
-        methods = [m for m in ("password", "email_code") if result["login"][m]]
+        methods = ["browser"] + [m for m in ("password", "email_code") if result["login"][m]]
         if result["cloud"]:
-            methods = [m for m in methods if m == "password"]  # Cloud email codes need a browser human check
+            methods = [m for m in methods if m != "email_code"]  # Cloud email codes need a browser human check
         result["login_methods"] = methods
-        result["next"] = ("ask the user to run the login command in their own terminal" if methods
-                          else "no CLI login is available on this server; fall back to build-dsl and manual import")
+        result["next"] = "run: login <server> (opens a temporary browser window for the user to sign in)"
     else:
         result["path"] = None
         result["next"] = "server unreachable: check the URL"
@@ -229,12 +230,21 @@ def cmd_login(a):
     server = norm_server(a.server or state.get("current") or "")
     if not server or server == "https://":
         fail("pass the server URL, for example https://cloud.dify.ai")
+    method = a.method
+    c = Console(server, need_login=False)
+    if method == "browser":
+        import browser_login
+        try:
+            cookies = browser_login.browser_login(server, timeout=a.timeout, log=lambda m: print(m, file=sys.stderr))
+        except (RuntimeError, TimeoutError, OSError) as e:
+            fail(f"browser sign-in failed: {e}")
+        c.jar.clear()
+        browser_login.to_cookiejar(cookies, c.jar)
+        return finish_login(c, server, state)
     if not sys.stdin.isatty():
         fail("run this in your own terminal: it asks for your password or email code, which must not go through the chat")
-    c = Console(server, need_login=False)
     c.jar.clear()
     email = input(f"Dify account email for {server}: ").strip()
-    method = a.method
     if method == "email-code":
         r = c.call("POST", "/email-code-login", {"email": email, "language": "en-US"}, retry=False)
         token = r.get("data")
@@ -245,6 +255,10 @@ def cmd_login(a):
         c.call("POST", "/login", {"email": email, "password": base64.b64encode(pw.encode()).decode(),
                                   "remember_me": True}, retry=False)
         del pw
+    return finish_login(c, server, state)
+
+
+def finish_login(c, server, state):
     if not c.cookie("access_token"):
         fail("login returned no session; this server may not support CLI login with this method")
     c.save()
@@ -493,7 +507,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     s = p.add_subparsers(dest="cmd", required=True)
     x = s.add_parser("detect"); x.add_argument("server")
-    x = s.add_parser("login"); x.add_argument("server", nargs="?"); x.add_argument("--method", choices=["password", "email-code"], default="password")
+    x = s.add_parser("login"); x.add_argument("server", nargs="?"); x.add_argument("--method", choices=["browser", "password", "email-code"], default="browser"); x.add_argument("--timeout", type=int, default=600)
     s.add_parser("logout"); s.add_parser("whoami"); s.add_parser("workspaces")
     x = s.add_parser("use-workspace"); x.add_argument("workspace_id")
     x = s.add_parser("models"); x.add_argument("--type", default="llm")

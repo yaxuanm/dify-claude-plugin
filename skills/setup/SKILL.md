@@ -23,7 +23,7 @@ console detect <server>
 Read `path`:
 
 - `difyctl`: the server has the official API. Go to **Path A**.
-- `console`: no official API (Dify Cloud today, or self-hosted with `OPENAPI_ENABLED` off). Go to **Path B**.
+- `console`: no official API (Dify Cloud today, or self-hosted with `OPENAPI_ENABLED` off). Go to **Path B**: browser sign-in.
 - `null`: unreachable. Ask the user to check the URL.
 
 Remember the path for the rest of the session and tell the user in one line which one you use and why. Do not ask them to choose.
@@ -39,20 +39,26 @@ The `difyctl` skill's `references/setup.md` has the details.
 
 ## Path B: console sign-in
 
-1. `login_methods` from detect lists what works from a terminal. On Dify Cloud that is `password` only: Cloud's emailed sign-in codes need a browser human check that a terminal cannot pass.
-2. Ask the user to open **their own terminal** (not this chat) and run the command below, typing their email and password there. The password is never stored or shown to you; only the session cookies are saved, in `~/.config/dify-claude-plugin/` with owner-only permissions. Print the full path for them (`echo "${CLAUDE_PLUGIN_ROOT}"`).
+The user signs in on Dify's own sign-in page, in a temporary browser window the plugin opens. Every sign-in method works there (email code, Google, GitHub, SSO, password), and any human check is done by the user in a real browser. The plugin then keeps only the session cookies, in `~/.config/dify-claude-plugin/` with owner-only permissions. The window uses a throwaway profile, so the user's normal browser and its sign-ins are not touched.
+
+1. Tell the user in one line: "A browser window will open on the Dify sign-in page. Sign in there as usual; it closes by itself when you are done."
+2. Run, with a Bash timeout of 10 minutes (600000 ms), since it waits for the user:
 
    ```bash
-   python3 "<plugin root>/scripts/dify_console.py" login <server>
-   # self-hosted servers that allow it: add --method email-code
+   console login <server>
    ```
 
-   Then end your turn and wait for "done". Never ask for a password or code in the chat. If the user pastes one anyway, do not repeat it and suggest they change it.
-
-3. When they reply, run `console whoami`. If it fails, show the error message.
+   It needs Chrome, Edge, Brave or Chromium installed. If none is found, ask the user for the browser's path and pass it as `DIFY_BROWSER=<path>`.
+3. On `logged_in: true`, run `console whoami`. On a timeout or a closed window, offer to try again.
 4. `console workspaces`. If the current one is not the one they want, `console use-workspace <id>`.
 
-If `password` is not in `login_methods`, or the account has no password (it signed up with Google, GitHub or an email code): tell the user they can set a password once in Dify (avatar → Account → set password) and then run the login again. Until then offer `build-dsl` (file import by hand) and `connect-app`.
+Fallbacks, only if the browser path cannot work (no desktop, remote machine): `password` or, on self-hosted servers that allow it, `email-code`, when `login_methods` lists them. These ask for secrets, so the user must run them in **their own terminal**, never in the chat:
+
+```bash
+python3 "<plugin root>/scripts/dify_console.py" login <server> --method password
+```
+
+Dify Cloud has password sign-in turned off and its email codes need a browser human check, so on Cloud the browser path is the only one.
 
 ## 3. Confirm and hand off
 
