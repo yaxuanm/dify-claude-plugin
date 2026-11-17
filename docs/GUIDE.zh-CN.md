@@ -44,18 +44,48 @@ claude plugin install dify@dify-plugins
 
 推到 GitHub 之后，用户安装命令是 `/plugin marketplace add yaxuanm/dify-claude-plugin`，再 `/plugin install dify@dify-plugins`。
 
-### 验收步骤（Cloud）
+### 分版本测试
 
-1. 在 Claude Code 里运行 `/dify:setup`，服务器选 Dify Cloud。Claude 应该说明会走 difyctl（官方接口），没装 difyctl 时先问你要不要装。
-2. Claude 给出一个链接和设备码。在你平时的浏览器里打开链接，确认设备码，点“授权”，然后回 Claude Code 说“好了”。
-3. Claude 显示你的账号和工作区。
-4. 运行 `/dify:new-app 一个工作流：输入客户反馈，输出情绪（正面/负面/中性）和一句话摘要`。依次检查：先给 spec 让你确认；导入后给出 app_id；跑草稿测试并给出逐条结果；发布前一定问你；同意后返回 Web App 链接和 API Key 别名（Key 本身不显示）。
-5. 在 Dify 控制台里核对一下（只是验收，正常使用时不需要）：应用已存在、已发布、API Key 已创建。
-6. 记录每一步的耗时和卡点。
+社区版、Cloud、企业版各测一遍。每个版本都先运行下面这条命令，看插件选了哪条路，再按表格逐项测。
 
-### 验收步骤（自部署）
+```bash
+python3 scripts/dify_console.py detect <服务器地址>
+```
 
-同上，服务器填你的地址。开了 `OPENAPI_ENABLED=true` 的服务器和 Cloud 一样走 difyctl；没开的会弹出临时浏览器窗口让你登录（需要 Chrome / Edge / Brave）。
+输出里的 `path` 是 `difyctl` 就是路径 A（官方接口），是 `console` 就是路径 B（临时浏览器窗口登录）。
+
+#### 1. 社区版（本地 Docker）
+
+社区版默认没开官方接口，所以要测两轮：
+
+- **第一轮，默认配置**：`detect` 应该返回 `path: console`。
+- **第二轮，打开官方接口**：在 `docker/.env` 里加 `OPENAPI_ENABLED=true`，重启 `api` 和 `worker` 容器，再 `detect`，应该返回 `path: difyctl`。
+
+服务器地址一般是 `http://localhost`（看你 Docker 映射的端口）。第一次打开要先在浏览器里建管理员账号，并在“设置 → 模型供应商”里配一个模型，这两步插件替代不了。
+
+#### 2. Dify Cloud
+
+服务器选 `https://cloud.dify.ai`。`detect` 应该返回 `path: difyctl`。登录是设备码：Claude 给链接和码，你在平时登录 Dify 的浏览器里点“授权”。
+
+#### 3. 企业版
+
+服务器填企业版的控制台地址。
+
+- 如果服务器开了官方接口，`detect` 返回 `path: difyctl`。登录时设备码授权页会跳到公司的 SSO，用公司账号登录后点“授权”（企业版 PR #584 加的 SSO 设备授权）。
+- 如果返回 `path: console`，说明这台没开 `OPENAPI_ENABLED`。临时浏览器窗口里同样可以走 SSO 登录，但更建议请管理员打开官方接口再测。
+- 额外检查：只能看到自己有权限的工作区；没有编辑权限的账号导入应用时，应该收到清楚的权限报错，而不是莫名失败。
+
+#### 每个版本都要测的项目
+
+| 命令 | 怎么测 | 通过标准 |
+| --- | --- | --- |
+| `/dify:setup` | 按提示登录 | Claude 说明走哪条路且和 `detect` 一致；最后显示你的邮箱和工作区；全程没让你在聊天里输入密码或 token |
+| `/dify:new-app` | `一个工作流：输入客户反馈，输出情绪（正面/负面/中性）和一句话摘要` | 先给 spec 等你确认；用的是工作区里真实存在的模型；导入成功并给出应用 ID；草稿测试逐条给结果；发布前一定先问你；同意后给 Web App 链接，API Key 只显示别名 |
+| `/dify:test-app` | 对上一步发布的应用跑用例 | 每条用例都有通过 / 不通过和理由；有失败时能读到失败的节点并给出改法 |
+| `/dify:knowledge` | 选 2 到 3 个本地 Markdown 或 PDF | 上传前列出文件和大小并等你确认；索引状态最后是 `completed`；3 个测试问题能召回对应文档 |
+| `/dify:connect-app` | 把发布的应用接成工具 | `claude mcp list` 里能看到 `dify-<应用名>`；在 Claude Code 里调用它能拿到应用的回答 |
+
+每一项都请记下三件事：是否需要打开 Dify 控制台（以及在哪一步）、报错原文、大概耗时。目前已知两处可能还要进控制台：`/dify:knowledge` 的知识库 API Key 和 `/dify:connect-app` 的 MCP 地址在路径 A 上还没有 difyctl 命令可以拿到，这正是这轮要确认的。
 
 ### 校验命令
 
