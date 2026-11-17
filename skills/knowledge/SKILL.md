@@ -53,5 +53,5 @@ For each, say whether the right document came back and how strong the score is. 
 
 ## 5. Use it
 
-- In a new app: give the dataset id to the `build-dsl` skill (knowledge-retrieval node) or the `new-app` skill.
+- In a new app: give the dataset id to the `new-app` skill (knowledge-retrieval node).
 - In an existing app: add it in the app's knowledge-retrieval node or context settings.

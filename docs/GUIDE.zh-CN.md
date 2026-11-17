@@ -1,6 +1,6 @@
 # Dify Claude Code 插件：安装、测试与上架说明
 
-状态：v0.3.3 原型，尚未提交任何官方目录。
+状态：v0.4.0 原型，尚未提交任何官方目录。
 
 ## 一、插件能做什么
 
@@ -10,7 +10,6 @@
 | --- | --- |
 | `/dify:setup` | 连接 Dify：探测服务器，自动选路，登录，选工作区 |
 | `/dify:new-app <需求>` | 需求 → spec → 生成应用 → 导入 → 草稿测试 → 经你同意后发布、给出 Web App 链接、建 API Key |
-| `/dify:build-dsl <需求>` | 只生成 DSL 文件并离线校验（不想登录时用） |
 | `/dify:test-app` | 用 Service API 对已发布应用跑验收用例、看日志 |
 | `/dify:knowledge` | 把本地文件建成知识库，测试召回 |
 | `/dify:connect-app` | 把已发布应用接成 Claude Code 可调用的工具（应用自带的 MCP 服务） |

@@ -4,7 +4,7 @@ Build, test and publish [Dify](https://dify.ai) apps without leaving Claude Code
 
 Connect your Dify workspace (Dify Cloud or self-hosted), describe the app you need in plain words, and Claude builds a working Workflow or Chatflow app in your workspace, runs test cases against it, and publishes it when you say yes.
 
-> Status: prototype (v0.3.3). Not yet listed in any official plugin directory.
+> Status: prototype (v0.4.0). Not yet listed in any official plugin directory.
 
 ## What you get
 
@@ -12,7 +12,6 @@ Connect your Dify workspace (Dify Cloud or self-hosted), describe the app you ne
 | --- | --- | --- |
 | `/dify:setup` | Detects what your server supports, picks the path, signs you in, selects a workspace. | Any Dify, including Cloud |
 | `/dify:new-app <description>` | Description to tested, published app with no trip to the console: spec, build, import, draft tests, then publish, web link and API key on your yes. | Any Dify, including Cloud |
-| `/dify:build-dsl <description>` | Writes the app as a Dify DSL file and checks it offline; you import it in one click. | Any Dify, including Cloud |
 | `/dify:test-app` | Runs acceptance cases against a published app through the Service API, reads failed runs and logs, suggests fixes. | Any Dify, including Cloud |
 | `/dify:knowledge` | Creates a knowledge base from local files and tests retrieval through the Knowledge API. | Any Dify, including Cloud |
 | `/dify:connect-app` | Turns a published Dify app into a tool Claude Code can call, through the app's built-in MCP server. | Any Dify, including Cloud |
@@ -25,7 +24,7 @@ Claude also uses these skills on its own when you mention Dify or ask to build a
 - Claude Code (CLI, desktop or IDE extension).
 - A Dify account: [Dify Cloud](https://cloud.dify.ai) or a self-hosted / Enterprise server.
 - Only on self-hosted servers without the official API: Chrome, Edge, Brave or Chromium on the same machine, for the one-time sign-in window.
-- Python 3 for the offline DSL check and the API helper (`build-dsl` needs PyYAML).
+- Python 3 for the offline DSL check and the API helper (the DSL check in the fallback path needs PyYAML).
 - macOS, Linux or Windows. `difyctl` is installed for you on first use (one binary in `~/.local/bin`).
 
 ## Install
@@ -88,7 +87,6 @@ Layout:
 .claude-plugin/marketplace.json   makes this repo installable as a marketplace
 skills/setup/                     /dify:setup
 skills/new-app/                   /dify:new-app
-skills/build-dsl/                 /dify:build-dsl (templates + offline DSL reference)
 skills/test-app/                  /dify:test-app
 skills/knowledge/                 /dify:knowledge
 skills/connect-app/               /dify:connect-app

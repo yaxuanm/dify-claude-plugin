@@ -12,10 +12,12 @@ The user's request: $ARGUMENTS
 
 ## 0. Connection
 
-Use the path the `setup` skill found in this session. If there is none yet, run the `setup` skill first, then come back. Two paths, same phases:
+Use the path the `setup` skill found in this session. If there is none yet, run the `setup` skill first, then come back. Building without a connection gives a worse app, because only a signed-in session can see the workspace's models, plugins and knowledge bases. Two paths, same phases:
 
 - **Path A, difyctl** (server has the official `/openapi/v1`).
 - **Path B, console** (`dify_console.py`; servers without the official API).
+
+If the user will not sign in at all, follow Path B steps 1 and 2 without the `console` lookups and hand over only the checked `app.yml`. Use the template's default model and only the node types in the reference, and tell them plainly: import it in Dify (Studio → Create app → Import DSL file), pick a model in each LLM node, then run the cases from `spec.md`. Offer to finish the job once they sign in.
 
 Below, `console` means `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_console.py"` and `dify_api` means `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_api.py"`.
 
@@ -40,7 +42,7 @@ Write `dify-apps/<app-slug>/spec.md` (goal, mode, requirements R1.., 3 to 5 acce
 
 ### 2. Build
 
-Write `dify-apps/<app-slug>/app.yml` following the `build-dsl` skill (its templates and `references/dsl-format.md`), using the real `node_model` and dataset ids from step 1. Check it until it prints OK:
+Copy the matching template from this skill's `templates/` (`workflow-llm.yml` or `chatflow-llm.yml`) to `dify-apps/<app-slug>/app.yml` and build on it with the node recipes in [`references/dsl-format.md`](references/dsl-format.md), using the real `node_model` and dataset ids from step 1. Use only node types the reference covers; list anything else (tool, HTTP request, classifier, iteration) as a follow-up for the user. Check it until it prints OK (it needs PyYAML; ask before `python3 -m pip install --user pyyaml`):
 
 ```bash
 python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate_dsl.py" dify-apps/<app-slug>/app.yml

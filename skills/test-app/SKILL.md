@@ -51,6 +51,6 @@ Report a table: case, verdict, and one line on why. Keep token and time figures 
 
 - Workflow: `dify_api app run-detail <alias> <workflow_run_id>` for status, outputs and error; `dify_api app logs <alias> --status failed` for recent failures from any caller.
 - Chat: look at `answer`, `error` and `retriever_resources` (which documents the knowledge base returned).
-- Find the cause: prompt, missing input, model error, empty retrieval, wrong branch. Propose the smallest fix. If the app was built from a DSL in this folder, change the file, run the `build-dsl` check, and re-import (difyctl, or `dify_console.py` on servers without the official API), then run the cases again.
+- Find the cause: prompt, missing input, model error, empty retrieval, wrong branch. Propose the smallest fix. If the app was built from a DSL in this folder, change the file, check it with `scripts/validate_dsl.py`, and re-import (difyctl, or `dify_console.py` on servers without the official API), then run the cases again.
 
 Never change or publish the user's app without their yes.
