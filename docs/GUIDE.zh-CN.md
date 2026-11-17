@@ -1,6 +1,6 @@
 # Dify Claude Code 插件：安装、测试与上架说明
 
-状态：v0.3.2 原型，尚未提交任何官方目录。
+状态：v0.3.3 原型，尚未提交任何官方目录。
 
 ## 一、插件能做什么
 
@@ -20,7 +20,7 @@
 
 `/dify:setup` 会先访问服务器上两个不需要登录的地址：
 
-- `/openapi/v1/_version` 返回 200：服务器开了官方接口 → **路径 A：difyctl**（默认）。**Dify Cloud 已经开了**（你查到 `{"version":"1.19.0","edition":"CLOUD"}`），自部署和企业版设了 `OPENAPI_ENABLED=true` 也走这条。插件给你一个链接和一个设备码，你在平时用的浏览器里（已经登录 Dify 的那个）点一次“授权”，之后全部由 difyctl 完成。企业版还支持 SSO 授权。
+- `/openapi/v1/_version` 返回 200：服务器开了官方接口 → **路径 A：difyctl**（默认）。**Dify Cloud 已经开了**（你查到 `{"version":"1.19.0","edition":"CLOUD"}`），自部署和企业版设了 `OPENAPI_ENABLED=true` 也走这条。插件给你一个链接和一个设备码，你在平时用的浏览器里（已经登录 Dify 的那个）点一次“授权”，之后全部由 difyctl 完成。企业版还支持 SSO 授权。在 CI 或没有浏览器的机器上，可以在自己的终端里设好 `DIFY_SERVER` 和 `DIFY_TOKEN`，插件会跳过登录。difyctl 安装的是最新版，命令由服务器的目录（catalog）下发，不需要和服务器版本对齐。
 - 否则 → **路径 B：控制台接口**（备用，只给没开官方接口的自部署或旧版本）。插件打开一个临时浏览器窗口，进入 Dify 登录页，用户正常登录。
 
 路径 B 的细节：
@@ -96,7 +96,7 @@ Claude Code 有三层分发，别混在一起说：
 - [ ] **提交账号**：用 Dify 公司的 Claude Team / Enterprise 组织提交，或由公司指定的人用个人作者入口提交；如果要进官方目录，需要 Anthropic 的合作伙伴联系人。
 - [ ] **品牌素材**：`assets/icon.png` 现在是用 Dify 仓库里的 logo.svg 渲染的 512×512 图，需要品牌团队确认或替换。
 - [ ] **法务链接**：确认 `privacyPolicyUrl`（https://dify.ai/privacy）、`termsOfServiceUrl`（https://dify.ai/terms）、`supportUrl`、`documentationUrl` 都是正确的公开地址。
-- [ ] **许可证**：本仓库用 Apache-2.0。复制进来的 difyctl skill 来自 langgenius/dify，该仓库是“修改版 Apache 2.0”（Dify Open Source License），需要确认可以这样再分发，或者改成安装时再执行 `difyctl install skills`。
+- [ ] **许可证**：本仓库用 Apache-2.0。复制进来的 difyctl skill 来自 langgenius/dify，该仓库是“修改版 Apache 2.0”（Dify Open Source License），需要确认可以这样再分发。另一个做法是插件不带这份 skill，改成在 setup 时执行 `difyctl install skills ~/.claude/skills`，用 difyctl 内置的版本，和二进制永远一致；代价是没装 difyctl 之前插件里看不到它，也不会出现在插件目录的 skill 列表里。现在两份内容和 dify 主干完全一致。
 - [ ] **difyctl 正式发布**：difyctl 已经随 Dify 1.17.1 起的 Release 发布（最新 v1.19.0，有 macOS / Linux / Windows 包）。需要确认它在 Cloud 上是对外支持的功能，而不只是内部开着。
 - [ ] **控制台备用路径**：只在没开官方接口的自部署上用，用的是控制台内部接口。提交前让 Dify 后端确认可以保留，或者正式版去掉，只留 difyctl。
 - [ ] **维护人**：上游 skill 更新时同步、改版本号、处理 issue。

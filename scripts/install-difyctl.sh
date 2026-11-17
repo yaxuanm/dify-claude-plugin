@@ -5,8 +5,10 @@
 # langgenius/dify (cli/scripts/install-cli.sh), which downloads the release
 # asset for this OS/arch, checks its sha256, and writes it to ~/.local/bin.
 #
-# Env passed through unchanged: DIFY_VERSION (match your Dify server version),
-# DIFYCTL_VERSION, DIFYCTL_INSTALL_DIR, DIFYCTL_PREFIX, GITHUB_TOKEN/GH_TOKEN.
+# It installs the latest release. difyctl gets its business commands from the
+# server's catalog at run time, so there is no need to match the server version.
+#
+# Env passed through unchanged: DIFY_VERSION, DIFYCTL_VERSION, DIFYCTL_INSTALL_DIR, DIFYCTL_PREFIX, GITHUB_TOKEN/GH_TOKEN.
 #
 # Windows: run this in PowerShell instead:
 #   irm https://raw.githubusercontent.com/langgenius/dify/main/cli/scripts/install.ps1 | iex

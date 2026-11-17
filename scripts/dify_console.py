@@ -201,6 +201,7 @@ def cmd_detect(a):
         "edition": fs.get("deployment_edition"),
         "openapi": oa_status == 200,
         "openapi_version": oa,
+        "env_token": bool(os.environ.get("DIFY_SERVER") and os.environ.get("DIFY_TOKEN")),
         "console_reachable": fs_status == 200,
         "login": {
             "password": fs.get("enable_email_password_login"),

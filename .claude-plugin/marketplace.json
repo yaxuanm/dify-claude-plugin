@@ -13,7 +13,7 @@
       "name": "dify",
       "source": "./",
       "description": "Build, test and publish Dify apps from Claude Code with the official difyctl CLI.",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "category": "development",
       "tags": ["dify", "workflow", "chatflow", "llm-apps", "agents"]
     }

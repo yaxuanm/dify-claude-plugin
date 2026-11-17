@@ -30,8 +30,12 @@ Remember the path for the rest of the session and tell the user in one line whic
 
 ## Path A: difyctl (official API)
 
-1. `sh "${CLAUDE_PLUGIN_ROOT}/scripts/difyctl-status.sh"`. If `installed` is false or `skill_install_supported` is false, ask to install, then run `sh "${CLAUDE_PLUGIN_ROOT}/scripts/install-difyctl.sh"` (set `DIFY_VERSION` to the server's version when known). On Windows give the user `irm https://raw.githubusercontent.com/langgenius/dify/main/cli/scripts/install.ps1 | iex` to run.
-2. `difyctl login --resume --json`. If it prints an `email`, skip to step 4.
+1. `sh "${CLAUDE_PLUGIN_ROOT}/scripts/difyctl-status.sh"`. If `installed` is false or `skill_install_supported` is false, ask to install, then run `sh "${CLAUDE_PLUGIN_ROOT}/scripts/install-difyctl.sh"`. It installs the latest release; difyctl reads its commands from the server's catalog, so the latest works with any server that has the official API. Re-run it to upgrade. On Windows give the user `irm https://raw.githubusercontent.com/langgenius/dify/main/cli/scripts/install.ps1 | iex` to run.
+
+   Do not run `difyctl install skills`: this plugin already ships the same skill as `dify:difyctl`, and a second copy in `~/.claude/skills` would load twice.
+2. If `env_token` from `detect` is true, the user has set `DIFY_SERVER` and `DIFY_TOKEN` in their shell (for CI or a headless machine). difyctl uses them and needs no login: run `difyctl describe workspace --json` to confirm, then go to step 4. Never ask the user to paste a token into the chat; they set it in their own shell before starting Claude Code.
+
+   Otherwise run `difyctl login --resume --json`. If it prints an `email`, skip to step 4.
 3. `difyctl login --server <server> --no-browser --no-wait --json`. Give the user the `verification_uri` and `user_code`, ask them to approve and reply "done", and **end your turn**. Then run `difyctl login --resume --json` once. `status: pending` means not yet approved: say so and end the turn again. Add `--no-keyring` on machines without a lasting keychain (containers, remote boxes).
 4. `difyctl get workspace --json`. Pin one with `difyctl use workspace <id> --json`, asking if there are several.
 

@@ -4,7 +4,7 @@ Build, test and publish [Dify](https://dify.ai) apps without leaving Claude Code
 
 Connect your Dify workspace (Dify Cloud or self-hosted), describe the app you need in plain words, and Claude builds a working Workflow or Chatflow app in your workspace, runs test cases against it, and publishes it when you say yes.
 
-> Status: prototype (v0.3.2). Not yet listed in any official plugin directory.
+> Status: prototype (v0.3.3). Not yet listed in any official plugin directory.
 
 ## What you get
 
@@ -60,7 +60,7 @@ claude plugin install dify@dify-plugins
 
 `/dify:setup` checks two public endpoints on your server and picks a path for you:
 
-- **Official API** (`/openapi/v1`: on for Dify Cloud, and for self-hosted servers that set `OPENAPI_ENABLED=true`): the plugin uses [`difyctl`](https://github.com/langgenius/dify/tree/main/cli), Dify's official CLI. You approve a device code in the browser once. Tokens live in your OS keychain.
+- **Official API** (`/openapi/v1`: on for Dify Cloud, and for self-hosted servers that set `OPENAPI_ENABLED=true`): the plugin uses [`difyctl`](https://github.com/langgenius/dify/tree/main/cli), Dify's official CLI. You approve a device code in the browser once. Tokens live in your OS keychain. For CI or a headless machine, set `DIFY_SERVER` and `DIFY_TOKEN` in your shell instead and no login is needed.
 - **Browser sign-in** (fallback for self-hosted servers without the official API): the plugin opens a temporary browser window on Dify's sign-in page and you sign in there with any method (email code, Google, GitHub, SSO). Only the session cookies are kept, in `~/.config/dify-claude-plugin/` (owner-only); your normal browser profile is never touched. The plugin then uses the same web API the Dify console uses. That API is internal to Dify and can change between versions.
 
 Either way:
