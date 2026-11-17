@@ -15,7 +15,7 @@ The user's request: $ARGUMENTS
 Use the path the `setup` skill found in this session. If there is none yet, run the `setup` skill first, then come back. Two paths, same phases:
 
 - **Path A, difyctl** (server has the official `/openapi/v1`).
-- **Path B, console** (`dify_console.py`; Dify Cloud and self-hosted without the official API).
+- **Path B, console** (`dify_console.py`; servers without the official API).
 
 Below, `console` means `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_console.py"` and `dify_api` means `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_api.py"`.
 

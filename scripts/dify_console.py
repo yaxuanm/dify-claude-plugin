@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """dify_console.py: drive a Dify workspace through its console API.
 
-The fallback path for servers where difyctl's /openapi/v1 is off, including
-Dify Cloud. It does what the Dify web console does (import a DSL, run the draft,
+The fallback path for servers where difyctl's /openapi/v1 is off (self-hosted
+servers with OPENAPI_ENABLED unset, older versions). It does what the Dify web console does (import a DSL, run the draft,
 publish, create an API key, read runs) so the user never has to open it.
 Standard library only. Every command prints one JSON object on stdout.
 

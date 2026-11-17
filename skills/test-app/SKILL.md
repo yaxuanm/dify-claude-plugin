@@ -8,7 +8,7 @@ argument-hint: '[key alias] [cases file]'
 
 The helper is `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_api.py"` (standard library only). Every command prints JSON. Below it is written as `dify_api`.
 
-If difyctl is signed in to the user's server (see the `setup` skill), prefer its own run and test commands instead: they also reach drafts. This skill is for published apps reachable only by API key, which includes Dify Cloud.
+If difyctl is signed in to the user's server (see the `setup` skill), prefer its own run and test commands instead: they also reach drafts. This skill is for published apps reachable by API key, for example someone else's app or a server you are not signed in to.
 
 ## 1. Key
 
@@ -51,6 +51,6 @@ Report a table: case, verdict, and one line on why. Keep token and time figures 
 
 - Workflow: `dify_api app run-detail <alias> <workflow_run_id>` for status, outputs and error; `dify_api app logs <alias> --status failed` for recent failures from any caller.
 - Chat: look at `answer`, `error` and `retriever_resources` (which documents the knowledge base returned).
-- Find the cause: prompt, missing input, model error, empty retrieval, wrong branch. Propose the smallest fix. If the app was built from a DSL in this folder, change the file, run the `build-dsl` check, and re-import (difyctl, or the console on Cloud), then run the cases again.
+- Find the cause: prompt, missing input, model error, empty retrieval, wrong branch. Propose the smallest fix. If the app was built from a DSL in this folder, change the file, run the `build-dsl` check, and re-import (difyctl, or `dify_console.py` on servers without the official API), then run the cases again.
 
 Never change or publish the user's app without their yes.

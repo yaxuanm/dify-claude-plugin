@@ -1,6 +1,6 @@
 # Dify Claude Code 插件：安装、测试与上架说明
 
-状态：v0.3.1 原型，尚未提交任何官方目录。
+状态：v0.3.2 原型，尚未提交任何官方目录。
 
 ## 一、插件能做什么
 
@@ -20,17 +20,16 @@
 
 `/dify:setup` 会先访问服务器上两个不需要登录的地址：
 
-- `/openapi/v1/_version` 返回 200：服务器开了官方接口（`OPENAPI_ENABLED=true`）→ **路径 A：difyctl**。浏览器授权页点一次“授权”即可，之后全部由 difyctl 完成。
-- 否则 → **路径 B：控制台接口**（目前 Dify Cloud 都走这条）。插件打开一个临时浏览器窗口，进入 Dify 登录页，用户正常登录。
+- `/openapi/v1/_version` 返回 200：服务器开了官方接口 → **路径 A：difyctl**（默认）。**Dify Cloud 已经开了**（你查到 `{"version":"1.19.0","edition":"CLOUD"}`），自部署和企业版设了 `OPENAPI_ENABLED=true` 也走这条。插件给你一个链接和一个设备码，你在平时用的浏览器里（已经登录 Dify 的那个）点一次“授权”，之后全部由 difyctl 完成。企业版还支持 SSO 授权。
+- 否则 → **路径 B：控制台接口**（备用，只给没开官方接口的自部署或旧版本）。插件打开一个临时浏览器窗口，进入 Dify 登录页，用户正常登录。
 
 路径 B 的细节：
 
 - **浏览器登录（默认）**：插件用你电脑上的 Chrome / Edge / Brave / Chromium 打开一个临时窗口，进入 Dify 登录页。你用任何方式登录都可以，验证码、Google、GitHub、SSO 都行，人机验证也是你本人在浏览器里过的。登录成功后，插件只取走会话 cookie 并关闭窗口。窗口用的是一次性配置，不会碰你平时用的浏览器和里面的登录状态。会话存在 `~/.config/dify-claude-plugin/`，只有你自己能读，过期了会自动续期。
-- 为什么不直接在命令行登录：Dify Cloud 关闭了密码登录（`enable_email_password_login: false`，你查到的）；邮箱验证码发送前要求 Cloudflare 人机验证；Google / GitHub 需要浏览器跳转。所以在 Cloud 上，浏览器登录是唯一可行的方式。
 - 备用方式：自部署服务器如果开着密码或验证码登录，又没有桌面环境（比如远程服务器），可以在自己的终端里用 `--method password` 或 `--method email-code` 登录。
-- 风险：控制台接口是 Dify 网页自用的内部接口，没有兼容性承诺，Dify 升级后可能需要跟着改。Cloud 一旦打开 `/openapi/v1`，插件会自动切到路径 A，用官方的设备授权登录。
+- 风险：控制台接口是 Dify 网页自用的内部接口，没有兼容性承诺，Dify 升级后可能需要跟着改。服务器一旦打开 `/openapi/v1`，插件会自动切到路径 A。
 
-路径 B 复用了 `yaxuanm/dify-ce-workflow-autobuilder-skill` 里的控制台调用（导入和确认、草稿运行和解析事件、发布、开启 API、创建 API Key），只把原来 `docker exec` 读 `SECRET_KEY` 自签 JWT 的登录换成了账号登录，所以 Cloud 和远程自部署都能用。
+路径 B 复用了 `yaxuanm/dify-ce-workflow-autobuilder-skill` 里的控制台调用（导入和确认、草稿运行和解析事件、发布、开启 API、创建 API Key），只把原来 `docker exec` 读 `SECRET_KEY` 自签 JWT 的登录换成了账号登录，所以远程自部署也能用。
 
 唯一可能还要进一次控制台的情况：工作区里一个可用的大模型都没有。这时需要先在“设置 → 模型供应商”里填 API Key。Cloud 新账号自带试用额度，一般不会遇到。
 
@@ -48,16 +47,16 @@ claude plugin install dify@dify-plugins
 
 ### 验收步骤（Cloud）
 
-1. 确认电脑上装了 Chrome（或 Edge / Brave）。
-2. 在 Claude Code 里运行 `/dify:setup`，服务器选 Dify Cloud。Claude 应该说明会走“浏览器登录”，接着弹出一个新的浏览器窗口，打开 Dify 登录页。
-3. 在这个窗口里正常登录。登录成功后窗口会自动关闭，Claude 显示你的账号和工作区。
+1. 在 Claude Code 里运行 `/dify:setup`，服务器选 Dify Cloud。Claude 应该说明会走 difyctl（官方接口），没装 difyctl 时先问你要不要装。
+2. Claude 给出一个链接和设备码。在你平时的浏览器里打开链接，确认设备码，点“授权”，然后回 Claude Code 说“好了”。
+3. Claude 显示你的账号和工作区。
 4. 运行 `/dify:new-app 一个工作流：输入客户反馈，输出情绪（正面/负面/中性）和一句话摘要`。依次检查：先给 spec 让你确认；导入后给出 app_id；跑草稿测试并给出逐条结果；发布前一定问你；同意后返回 Web App 链接和 API Key 别名（Key 本身不显示）。
 5. 在 Dify 控制台里核对一下（只是验收，正常使用时不需要）：应用已存在、已发布、API Key 已创建。
 6. 记录每一步的耗时和卡点。
 
 ### 验收步骤（自部署）
 
-同上，服务器填你的地址。开了 `OPENAPI_ENABLED=true` 的服务器会走 difyctl 路径（需要授权页点一次）；没开的走控制台路径。
+同上，服务器填你的地址。开了 `OPENAPI_ENABLED=true` 的服务器和 Cloud 一样走 difyctl；没开的会弹出临时浏览器窗口让你登录（需要 Chrome / Edge / Brave）。
 
 ### 校验命令
 
@@ -78,8 +77,8 @@ claude plugin validate . --profile directory --strict
 未验证（需要你用真实账号测）：
 
 - **以上所有调用都没有在真实的 Dify Cloud 或自部署上跑过。** 请求格式取自 Dify 当前源码和你仓库里在 CE 上验证过的脚本，但字段细节可能还要调整。
-- Cloud 登录后的 cookie 名称和域名是否和源码一致；Cloud 前面的 Cloudflare 会不会拦截插件这种非浏览器发出的请求。
-- difyctl 的真实下载和设备码登录。
+- difyctl 在 Cloud 上的设备码登录和整套流程（Cloud 的 `/openapi/v1` 已确认打开，difyctl v1.19.0 已随 Dify 1.19.0 发布，和 Cloud 版本一致）。
+- 控制台备用路径在真实自部署上的 cookie 和接口细节。
 - 知识库文件上传。
 
 ## 四、提交官方目录还需要什么
@@ -98,8 +97,8 @@ Claude Code 有三层分发，别混在一起说：
 - [ ] **品牌素材**：`assets/icon.png` 现在是用 Dify 仓库里的 logo.svg 渲染的 512×512 图，需要品牌团队确认或替换。
 - [ ] **法务链接**：确认 `privacyPolicyUrl`（https://dify.ai/privacy）、`termsOfServiceUrl`（https://dify.ai/terms）、`supportUrl`、`documentationUrl` 都是正确的公开地址。
 - [ ] **许可证**：本仓库用 Apache-2.0。复制进来的 difyctl skill 来自 langgenius/dify，该仓库是“修改版 Apache 2.0”（Dify Open Source License），需要确认可以这样再分发，或者改成安装时再执行 `difyctl install skills`。
-- [ ] **difyctl 正式发布**：确认 difyctl 已经随 Dify Release 稳定发布，并支持 Cloud 和主流自部署版本，否则用户装完插件也走不通。
-- [ ] **控制台登录的审核风险**：Cloud 路径用的是控制台内部接口和密码登录。提交前最好让 Dify 后端确认这种用法可以接受，并在 Anthropic 审核时说明：发布方就是 Dify 本身，凭证只在用户本机终端输入。长期还是建议 Cloud 打开官方 `/openapi/v1`，插件会自动切过去。
+- [ ] **difyctl 正式发布**：difyctl 已经随 Dify 1.17.1 起的 Release 发布（最新 v1.19.0，有 macOS / Linux / Windows 包）。需要确认它在 Cloud 上是对外支持的功能，而不只是内部开着。
+- [ ] **控制台备用路径**：只在没开官方接口的自部署上用，用的是控制台内部接口。提交前让 Dify 后端确认可以保留，或者正式版去掉，只留 difyctl。
 - [ ] **维护人**：上游 skill 更新时同步、改版本号、处理 issue。
 
 ## 五、后续可以加的

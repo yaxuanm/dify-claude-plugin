@@ -22,8 +22,8 @@ console detect <server>
 
 Read `path`:
 
-- `difyctl`: the server has the official API. Go to **Path A**.
-- `console`: no official API (Dify Cloud today, or self-hosted with `OPENAPI_ENABLED` off). Go to **Path B**: browser sign-in.
+- `difyctl`: the server has the official API (Dify Cloud, and self-hosted or Enterprise servers with `OPENAPI_ENABLED` on). Go to **Path A**.
+- `console`: no official API (self-hosted with `OPENAPI_ENABLED` off, or an older version). Go to **Path B**: browser sign-in.
 - `null`: unreachable. Ask the user to check the URL.
 
 Remember the path for the rest of the session and tell the user in one line which one you use and why. Do not ask them to choose.
@@ -57,8 +57,6 @@ Fallbacks, only if the browser path cannot work (no desktop, remote machine): `p
 ```bash
 python3 "<plugin root>/scripts/dify_console.py" login <server> --method password
 ```
-
-Dify Cloud has password sign-in turned off and its email codes need a browser human check, so on Cloud the browser path is the only one.
 
 ## 3. Confirm and hand off
 

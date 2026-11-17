@@ -1,12 +1,12 @@
 ---
 name: build-dsl
-description: 'Write a Dify app as a DSL (YAML) file from a plain-language description, check it offline, and hand it over for import into Dify Cloud or any Dify server. Use when the user wants a Dify Workflow or Chatflow but difyctl cannot reach their server (for example on Dify Cloud), or asks for a Dify DSL / YAML / importable app file.'
+description: 'Write a Dify app as a DSL (YAML) file from a plain-language description, check it offline, and hand it over for import into Dify Cloud or any Dify server. Use when the user wants a Dify Workflow or Chatflow but is not signed in to their server, or asks for a Dify DSL / YAML / importable app file.'
 argument-hint: '<what the app should do>'
 ---
 
 # Build a Dify app as a DSL file
 
-Goal: a `.yml` file the user imports into Dify (Studio → Create app → Import DSL file) and that runs on the first try. This path needs no CLI and no login, so it works on Dify Cloud today.
+Goal: a `.yml` file the user imports into Dify (Studio → Create app → Import DSL file) and that runs on the first try. This path needs no CLI and no login, so it works with any Dify server.
 
 The user's request: $ARGUMENTS
 
