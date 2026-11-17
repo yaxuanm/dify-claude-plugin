@@ -226,6 +226,29 @@ def cmd_detect(a):
     out(result)
 
 
+LOOPBACK_HOSTS = {"127.0.0.1", "localhost", "0.0.0.0", "::1"}
+
+
+def cmd_device_url(a):
+    """Fix a difyctl device link that points at an address the user cannot open.
+
+    The server builds verification_uri from CONSOLE_WEB_URL, or from the address
+    the request came in on. Under Docker that is often an internal one such as
+    http://127.0.0.1:3000. When the link is a loopback address with a different
+    origin from the server the user entered, rebuild it on that server.
+    """
+    server = norm_server(a.server)
+    v = urllib.parse.urlsplit(a.verification_uri)
+    srv = urllib.parse.urlsplit(server)
+    same_origin = (v.scheme, v.netloc) == (srv.scheme, srv.netloc)
+    if not same_origin and (v.hostname or "") in LOOPBACK_HOSTS:
+        fixed = urllib.parse.urlunsplit((srv.scheme, srv.netloc, v.path or "/device", v.query, ""))
+        out({"url": fixed, "rewritten": True, "original": a.verification_uri,
+             "note": "the server's CONSOLE_WEB_URL points at an internal address; set it to the URL you open Dify at"})
+    else:
+        out({"url": a.verification_uri, "rewritten": False})
+
+
 def cmd_login(a):
     state = load_state()
     server = norm_server(a.server or state.get("current") or "")
@@ -508,6 +531,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     s = p.add_subparsers(dest="cmd", required=True)
     x = s.add_parser("detect"); x.add_argument("server")
+    x = s.add_parser("device-url"); x.add_argument("server"); x.add_argument("verification_uri")
     x = s.add_parser("login"); x.add_argument("server", nargs="?"); x.add_argument("--method", choices=["browser", "password", "email-code"], default="browser"); x.add_argument("--timeout", type=int, default=600)
     s.add_parser("logout"); s.add_parser("whoami"); s.add_parser("workspaces")
     x = s.add_parser("use-workspace"); x.add_argument("workspace_id")
@@ -525,7 +549,7 @@ def main():
     x = s.add_parser("kb-key"); x.add_argument("--alias", default="kb")
     x = s.add_parser("webapp"); x.add_argument("app_id"); g = x.add_mutually_exclusive_group(); g.add_argument("--enable", action="store_true"); g.add_argument("--disable", action="store_true")
     a = p.parse_args()
-    handlers = {"detect": cmd_detect, "login": cmd_login, "logout": cmd_logout, "whoami": cmd_whoami,
+    handlers = {"detect": cmd_detect, "device-url": cmd_device_url, "login": cmd_login, "logout": cmd_logout, "whoami": cmd_whoami,
                 "workspaces": cmd_workspaces, "use-workspace": cmd_use_workspace, "models": cmd_models,
                 "datasets": cmd_datasets, "apps": cmd_apps, "import": cmd_import, "check-deps": cmd_check_deps,
                 "run-draft": cmd_run_draft, "test-draft": cmd_test_draft, "runs": cmd_runs, "run-detail": cmd_run_detail,
