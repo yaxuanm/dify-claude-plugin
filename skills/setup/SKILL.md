@@ -12,7 +12,13 @@ Talk to the user in their language. Keep each message short: what you did, what 
 
 ## 1. Server
 
-If the user passed a URL (`$ARGUMENTS`), use it. Otherwise ask: **Dify Cloud** (`https://cloud.dify.ai`) or their own server (the URL they open Dify at). Never guess a self-hosted URL.
+If the user passed a URL (`$ARGUMENTS`), use it. Otherwise ask which Dify they use: **Dify Cloud** (`https://cloud.dify.ai`), their own server (the URL they open Dify at), or **none yet**. Never guess a self-hosted URL.
+
+If they have no Dify yet, say so plainly and offer three ways forward, then wait for their pick:
+
+1. **Dify Cloud** (quickest): sign up free at <https://cloud.dify.ai>, with any email or a Google / GitHub account, then come back and continue here with `https://cloud.dify.ai`. New accounts include trial model credits.
+2. **Self-host with Docker**: follow <https://docs.dify.ai/getting-started/install-self-hosted> (needs Docker; about 10 minutes): clone `langgenius/dify`, then in `docker/` run `cp .env.example .env` and `docker compose up -d`. They open `http://localhost/install` to create the admin account and add a model provider key, then come back with that URL. To use the official API there, add `OPENAPI_ENABLED=true` to `docker/.env` and restart.
+3. **No account for now**: the `new-app` skill can still write a checked `app.yml` to import later; it cannot test or publish it.
 
 ## 2. Detect
 
@@ -24,7 +30,7 @@ Read `path`:
 
 - `difyctl`: the server has the official API (Dify Cloud, and self-hosted or Enterprise servers with `OPENAPI_ENABLED` on). Go to **Path A**.
 - `console`: no official API (self-hosted with `OPENAPI_ENABLED` off, or an older version). Go to **Path B**: browser sign-in.
-- `null`: unreachable. Ask the user to check the URL.
+- `null`: nothing answered as Dify at that URL. Tell the user what you tried, ask them to check the address (open it in the browser: it should show the Dify sign-in page; for self-hosted, make sure the server or Docker is running), and offer the three options above if they turn out not to have a Dify yet.
 
 Remember the path for the rest of the session and tell the user in one line which one you use and why. Do not ask them to choose.
 

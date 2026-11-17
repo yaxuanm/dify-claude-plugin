@@ -12,7 +12,7 @@ The user's request: $ARGUMENTS
 
 ## 0. Connection
 
-Use the path the `setup` skill found in this session. If there is none yet, run the `setup` skill first, then come back. Building without a connection gives a worse app, because only a signed-in session can see the workspace's models, plugins and knowledge bases. Two paths, same phases:
+Use the path the `setup` skill found in this session. If there is none yet, run the `setup` skill first, then come back; if the user has no Dify at all, it explains how to get one. Building without a connection gives a worse app, because only a signed-in session can see the workspace's models, plugins and knowledge bases. Two paths, same phases:
 
 - **Path A, difyctl** (server has the official `/openapi/v1`).
 - **Path B, console** (`dify_console.py`; servers without the official API).

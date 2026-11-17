@@ -222,7 +222,7 @@ def cmd_detect(a):
         result["next"] = "run: login <server> (opens a temporary browser window for the user to sign in)"
     else:
         result["path"] = None
-        result["next"] = "server unreachable: check the URL"
+        result["next"] = "no Dify answered at this URL: check the address and that the server is running; if the user has no Dify, offer Dify Cloud (https://cloud.dify.ai) or self-hosting"
     out(result)
 
 
