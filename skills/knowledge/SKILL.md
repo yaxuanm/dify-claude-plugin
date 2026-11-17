@@ -10,7 +10,7 @@ The helper is `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_api.py"`, written bel
 
 ## 1. Key
 
-The Knowledge API uses one workspace-wide key (in Dify: **Knowledge** → **API** → **API Key**; it starts with `dataset-`). It can read and change every knowledge base in the workspace, so say that before asking for it. Have the user save it in their own terminal, never in the chat:
+The Knowledge API uses one workspace-wide key (in Dify: **Knowledge** → **API** → **API Key**; it starts with `dataset-`). It can read and change every knowledge base in the workspace, so say that first. If the session is signed in through the console path (`setup` skill, Path B), create and save it without the console on the user's yes: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_console.py" kb-key --alias kb`. Otherwise have the user save it in their own terminal, never in the chat:
 
 ```bash
 python3 "<plugin root>/scripts/dify_api.py" key set kb                     # Dify Cloud

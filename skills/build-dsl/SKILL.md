@@ -42,8 +42,8 @@ Then walk each test case through the graph yourself and check that every require
 
 ## 4. Hand over
 
-- **difyctl works** (self-hosted with `OPENAPI_ENABLED`, see the `setup` skill): offer to import, test and publish it for the user with the `difyctl` skill's build flow (`references/build-workflow/build.md`, import step).
-- **Otherwise** (Dify Cloud, or no CLI): give the user these steps:
+- **Signed in** (either path of the `setup` skill): offer to import, test and publish it for the user, following the `new-app` skill from its build step. No console needed.
+- **Not signed in and the user does not want to sign in**: give them these manual steps:
   1. Open Dify → **Studio** → **Create app** → **Import DSL file**, and choose `dify-apps/<app-slug>/app.yml`.
   2. If Dify asks to confirm a version difference, confirm.
   3. Open the LLM node and check the model. Pick one if it shows as unavailable.

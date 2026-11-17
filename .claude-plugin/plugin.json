@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "dify",
   "displayName": "Dify",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Build, test and publish Dify apps from Claude Code. Connect a Dify workspace (Cloud or self-hosted), describe what you need, and get a working Workflow or Chatflow app, using the official difyctl CLI.",
   "author": {
     "name": "Dify",

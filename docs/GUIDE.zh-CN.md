@@ -1,73 +1,87 @@
-# Dify Claude Code 插件：安装测试与上架说明
+# Dify Claude Code 插件：安装、测试与上架说明
 
-状态：v0.2.0 原型，尚未提交任何官方目录。
+状态：v0.3.0 原型，尚未提交任何官方目录。
 
-## 一、插件里有什么
+## 一、插件能做什么
 
-| 组件 | 作用 |
+用户在 Claude Code 里描述需求，插件就在他的 Dify 工作区里把应用建好、测好、发布好，**全程不用打开 Dify 控制台**。Cloud 和自部署都支持，插件会自己判断走哪条路，用户不用选。
+
+| 命令 | 作用 |
 | --- | --- |
-| `/dify:setup` | 引导连接：检查并安装 difyctl，用浏览器设备码登录 Dify Cloud 或自部署服务器，选定 workspace。 |
-| `/dify:new-app <需求描述>` | 从一句话需求到可运行应用：简短 spec、计划、搭建、跑验收用例，经用户同意后发布并给出 Web App 链接。 |
-| `difyctl` skill | 原样打包 Dify 官方 difyctl skill（来自 langgenius/dify 的 `skills/difyctl`），负责具体操作方法。 |
+| `/dify:setup` | 连接 Dify：探测服务器，自动选路，登录，选工作区 |
+| `/dify:new-app <需求>` | 需求 → spec → 生成应用 → 导入 → 草稿测试 → 经你同意后发布、给出 Web App 链接、建 API Key |
+| `/dify:build-dsl <需求>` | 只生成 DSL 文件并离线校验（不想登录时用） |
+| `/dify:test-app` | 用 Service API 对已发布应用跑验收用例、看日志 |
+| `/dify:knowledge` | 把本地文件建成知识库，测试召回 |
+| `/dify:connect-app` | 把已发布应用接成 Claude Code 可调用的工具（应用自带的 MCP 服务） |
+| `difyctl` skill | Dify 官方 difyctl skill，原样打包 |
 
-设计取舍：
+## 二、两条路是怎么自动选的
 
-- 底层用 difyctl，而不是自己写 MCP。difyctl 的命令来自服务器发布的操作目录，Dify 新增能力后插件不用改。Dify 目前没有面向“管理 workspace / 搭应用”的官方远程 MCP，以后如果有，可以在 `plugin.json` 里加 `mcpServers`，体验会更接近 n8n（安装时填 URL，OAuth 授权）。
-- 没有加 hooks。n8n 用 SessionStart / PreToolUse hooks 做提醒；我们先保持最小权限，减少审核风险。另外 OpenAI 的插件目录明确不收带生命周期 hooks 的插件，以后做 Codex 版也能复用同一套内容。
-- 官方 difyctl skill 是复制进来的，用 `scripts/sync-difyctl-skill.sh` 同步上游，`NOTICE` 记录了来源 commit。
+`/dify:setup` 会先访问服务器上两个不需要登录的地址：
 
-## 二、本地安装测试
+- `/openapi/v1/_version` 返回 200：服务器开了官方接口（`OPENAPI_ENABLED=true`）→ **路径 A：difyctl**。浏览器授权页点一次“授权”即可，之后全部由 difyctl 完成。
+- 否则 → **路径 B：控制台接口**（目前 Dify Cloud 都走这条）。用户在自己的终端里运行一次登录命令，输入邮箱和密码。
 
-前提：已装 Claude Code；有一个 Dify 账号（Cloud 或自部署）。
+路径 B 的细节：
 
-### 方式 A：不安装，直接加载目录（开发时最快）
+- 只支持**邮箱 + 密码**登录。Cloud 的邮箱验证码在发送前强制要求 Cloudflare 人机验证（源码 `EmailCodeSendPayload`："Required at runtime for Dify Cloud"），命令行无法通过，插件也不会绕过。Google / GitHub 登录需要浏览器跳转，同样不支持。
+- 用验证码或 Google 注册、没设过密码的账号：在 Dify 里点头像 → 账号 → “设置密码”，设一次即可。
+- 密码只在用户自己的终端输入，不显示、不保存、不经过聊天；保存的只有会话 cookie，位置是 `~/.config/dify-claude-plugin/`（仅本人可读）。会话过期会自动续期。
+- 自部署但没开官方接口时，也走路径 B；如果服务器允许，可以用邮箱验证码登录（`--method email-code`）。
+- 风险：控制台接口是 Dify 网页自用的内部接口，没有兼容性承诺，Dify 升级后可能需要跟着改。Cloud 一旦打开 `/openapi/v1`，插件会自动切到路径 A。
+
+路径 B 复用了 `yaxuanm/dify-ce-workflow-autobuilder-skill` 里的控制台调用（导入和确认、草稿运行和解析事件、发布、开启 API、创建 API Key），只把原来 `docker exec` 读 `SECRET_KEY` 自签 JWT 的登录换成了账号登录，所以 Cloud 和远程自部署都能用。
+
+唯一可能还要进一次控制台的情况：工作区里一个可用的大模型都没有。这时需要先在“设置 → 模型供应商”里填 API Key。Cloud 新账号自带试用额度，一般不会遇到。
+
+## 三、本地安装测试
 
 ```bash
 cd ~/Fluffy/dify-claude-plugin
-claude --plugin-dir .
-```
-
-进入会话后输入 `/dify:setup`。
-
-### 方式 B：按真实用户的方式安装（推荐验收用）
-
-```bash
+claude --plugin-dir .            # 不安装，直接加载
+# 或者按真实用户的方式安装：
 claude plugin marketplace add ~/Fluffy/dify-claude-plugin
 claude plugin install dify@dify-plugins
 ```
 
-推到 GitHub 之后，用户的安装命令就变成：
+推到 GitHub 之后，用户安装命令是 `/plugin marketplace add yaxuanm/dify-claude-plugin`，再 `/plugin install dify@dify-plugins`。
 
-```text
-/plugin marketplace add yaxuanm/dify-claude-plugin
-/plugin install dify@dify-plugins
-```
+### 验收步骤（Cloud）
 
-### 校验
+1. 浏览器打开 <https://cloud.dify.ai/console/api/system-features>，确认 `enable_email_password_login` 是 `true`。
+2. 确认你的 Cloud 账号设置过密码。
+3. 在 Claude Code 里运行 `/dify:setup`，服务器选 Dify Cloud。Claude 应该说明会走“控制台登录”，并给你一条登录命令。
+4. 另开一个终端运行这条命令，输入邮箱和密码，回到 Claude Code 回复“done”。Claude 应该显示你的账号和工作区。
+5. 运行 `/dify:new-app 一个工作流：输入客户反馈，输出情绪（正面/负面/中性）和一句话摘要`。依次检查：先给 spec 让你确认；导入后给出 app_id；跑草稿测试并给出逐条结果；发布前一定问你；同意后返回 Web App 链接和 API Key 别名（Key 本身不显示）。
+6. 在 Dify 控制台里核对一下（只是验收，正常使用时不需要）：应用已存在、已发布、API Key 已创建。
+7. 记录每一步的耗时和卡点。
+
+### 验收步骤（自部署）
+
+同上，服务器填你的地址。开了 `OPENAPI_ENABLED=true` 的服务器会走 difyctl 路径（需要授权页点一次）；没开的走控制台路径。
+
+### 校验命令
 
 ```bash
-claude plugin validate . --profile directory --strict   # 目录提交前的检查
-claude plugin details dify@dify-plugins                  # 看组件和 token 开销
+claude plugin validate . --profile directory --strict
 ```
 
-### 建议的验收脚本（测“安装 → 连接 → 首个应用跑通”）
+## 四、已验证和未验证
 
-1. `/dify:setup`：确认会先问是否安装 difyctl、问服务器地址；给出链接和设备码后停下等你批准；回复“done”后能显示账号和 workspace。
-2. `/dify:new-app 一个客服机器人，根据我们的退款政策回答问题，用客户的语言回复`：确认会先出 spec 让你确认，再出计划，再搭建和测试，发布前一定问你。
-3. 记录每一步耗时和卡点：difyctl 安装、登录、模型凭证缺失（新 workspace 很常见）、发布。这就是给 Jerome 的转化漏斗数据。
+已验证：
 
-## 三、已验证和未验证
+- 目录提交检查（`--profile directory --strict`）通过，没有警告。
+- `validate_dsl.py` 用 Dify 仓库里 36 个真实 DSL 跑过，没有误报。
+- `dify_console.py` 在模拟服务器上跑通了整套流程：探测、终端密码登录（cookie 和 CSRF）、access token 过期后自动续期、查模型、导入（含版本确认）、草稿运行和用例测试、发布、建 API Key 并存进本机 key 库、Web App 链接、登出。
+- 让 Claude 端到端跑了一遍 `/dify:new-app`：它查了模型、写了 spec 和用例、生成 DSL 并校验、导入、跑了草稿测试。测试没通过时，它停在发布前，并指出是服务器的问题。这是对的：模拟服务器对任何输入都返回同一个结果。
 
-已验证（在云端沙箱里）：
+未验证（需要你用真实账号测）：
 
-- `claude plugin validate . --profile directory --strict` 通过，没有任何警告。
-- 以 marketplace 方式安装成功，3 个 skill 都被识别，常驻开销约 330 tokens。
-- 运行 `/dify:setup` 时，Claude 正确调用了插件里的状态脚本，发现没装 difyctl 后先征求同意并询问服务器，没有擅自安装。
-
-未验证，需要你在本机测：
-
-- difyctl 的实际下载安装：沙箱网络访问不到 langgenius/dify 的 GitHub Release API。
-- 登录和搭建：需要真实的 Dify 账号。尤其要确认 **Dify Cloud（cloud.dify.ai）是否已支持 difyctl 的设备码登录**，以及 Cloud 当前版本是否带 difyctl 需要的操作目录。如果 Cloud 还不支持，第一版应先面向自部署/企业版用户。
+- **以上所有调用都没有在真实的 Dify Cloud 或自部署上跑过。** 请求格式取自 Dify 当前源码和你仓库里在 CE 上验证过的脚本，但字段细节可能还要调整。
+- Cloud 是否开着密码登录、Cloud 登录后的 cookie 名称和域名是否和源码一致。
+- difyctl 的真实下载和设备码登录。
+- 知识库文件上传。
 
 ## 四、提交官方目录还需要什么
 
@@ -86,35 +100,12 @@ Claude Code 有三层分发，别混在一起说：
 - [ ] **法务链接**：确认 `privacyPolicyUrl`（https://dify.ai/privacy）、`termsOfServiceUrl`（https://dify.ai/terms）、`supportUrl`、`documentationUrl` 都是正确的公开地址。
 - [ ] **许可证**：本仓库用 Apache-2.0。复制进来的 difyctl skill 来自 langgenius/dify，该仓库是“修改版 Apache 2.0”（Dify Open Source License），需要确认可以这样再分发，或者改成安装时再执行 `difyctl install skills`。
 - [ ] **difyctl 正式发布**：确认 difyctl 已经随 Dify Release 稳定发布，并支持 Cloud 和主流自部署版本，否则用户装完插件也走不通。
+- [ ] **控制台登录的审核风险**：Cloud 路径用的是控制台内部接口和密码登录。提交前最好让 Dify 后端确认这种用法可以接受，并在 Anthropic 审核时说明：发布方就是 Dify 本身，凭证只在用户本机终端输入。长期还是建议 Cloud 打开官方 `/openapi/v1`，插件会自动切过去。
 - [ ] **维护人**：上游 skill 更新时同步、改版本号、处理 issue。
-
-## v0.2 新增：difyctl 之外的能力
-
-| 命令 | 作用 | 适用 |
-| --- | --- | --- |
-| `/dify:build-dsl <需求>` | 生成 Dify DSL 文件并离线校验，导入后即可运行 | 所有 Dify，含 Cloud |
-| `/dify:test-app` | 用 Service API 对已发布应用跑验收用例，读失败运行和日志，给出修改建议 | 所有 Dify，含 Cloud |
-| `/dify:knowledge` | 用 Knowledge API 把本地文件建成知识库，并测召回 | 所有 Dify，含 Cloud |
-| `/dify:connect-app` | 通过应用自带的「MCP 服务」把已发布应用接成 Claude Code 的工具 | 所有 Dify，含 Cloud |
-
-### 能不能完全不进控制台
-
-- **自部署，开启 `OPENAPI_ENABLED=true`**：可以。difyctl 走的 `/openapi/v1` 能建应用、导入 DSL、跑草稿、单节点测试、发布前检查、发布、开关 Web App 和 Service API、装插件。唯一手动步骤是登录时在浏览器授权页点一次。
-- **Dify Cloud**：要看 Cloud 是否打开 `OPENAPI_ENABLED`。源码里 `/openapi/v1` 已经有 Cloud 专用的套餐额度检查（`CheckAppQuota`），说明是按 Cloud 可用设计的，需要内部确认上线时间。在那之前，Cloud 用户需要进控制台做三件事：导入 DSL、创建 API Key、开启应用的 MCP 服务。
-- **不建议**用控制台内部接口（伪造 JWT、账号密码、复制浏览器 token）做公开版：不是公开接口，随时可能变，目录审核也可能当作绕过认证。
-
-### 为什么 Console API 没放进公开版
-
-`yaxuanm/dify-ce-workflow-autobuilder-skill` 里的 `dify_ce_console.py` 是 `docker exec` 读 `SECRET_KEY` 后自签控制台 JWT。它在本地 CE 开发环境里很好用，但需要服务器 shell 权限，Cloud 不可用，也不适合进公开目录。可以保留为“本地 CE 开发模式”。
-
-### 已验证
-
-- `validate_dsl.py` 用 Dify 仓库里 36 个真实 DSL 文件跑过，没有误报。
-- `/dify:build-dsl` 端到端试跑：生成了带 LLM、代码、条件分支的“客户反馈情绪分析”工作流，校验通过。还没在真实 Dify 中导入。
-- `dify_api.py` 的应用信息、workflow 运行、chat 流式结果合并、验收用例判定，在本地模拟服务器上测过；知识库上传没有对真实服务器测过。
 
 ## 五、后续可以加的
 
-- Codex 版：同一套 skills，加 `.codex-plugin/plugin.json`（按 OpenAI 要求加 `interface` 字段：displayName、shortDescription、logo、composerIcon、capabilities 等）和 `.agents/plugins/marketplace.json`。
-- 如果 Dify 推出官方远程 MCP（OAuth），在 `plugin.json` 里加 `mcpServers` 和 `userConfig`（服务器 URL），安装时直接连接。
-- 用 `claude plugin eval` 给 setup / new-app 加评测用例，作为每次发布前的回归测试。
+- 模型供应商 API Key 也通过终端录入（控制台接口支持），彻底不进控制台。
+- Codex 版：同一套 skills，加 `.codex-plugin/plugin.json` 和 `.agents/plugins/marketplace.json`。
+- 你仓库里的 New Agent / Agent V2 能力，等接口在 Cloud 上可用后合进来。
+- 用 `claude plugin eval` 给 setup / new-app 加评测用例。

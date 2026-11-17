@@ -40,6 +40,7 @@ import pathlib
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 import uuid
 
@@ -93,7 +94,8 @@ def resolve(alias):
 
 
 def mask(key):
-    return key[:8] + "…" if len(key) > 8 else "…"
+    prefix = key.split("-", 1)[0] + "-" if "-" in key[:9] else ""
+    return prefix + "…" + key[-4:] if len(key) > 12 else "…"
 
 
 # ---------- http ----------
@@ -375,5 +377,4 @@ def main():
 
 
 if __name__ == "__main__":
-    import urllib.parse  # noqa: E402  (used by request())
     main()

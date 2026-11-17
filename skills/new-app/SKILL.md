@@ -1,50 +1,84 @@
 ---
 name: new-app
-description: 'Turn a plain-language description into a working Dify app (Workflow or Chatflow): agree a short spec, build it in the connected workspace with difyctl, test it, and publish it on the user''s yes. Use when the user runs /dify:new-app, or asks to build, create or prototype an AI app, chatbot, agent, RAG / knowledge-base Q&A, or automation workflow on Dify.'
+description: 'Turn a plain-language description into a working, tested Dify app (Workflow or Chatflow) in the user''s workspace, end to end and without opening the Dify console: spec, build, import, draft tests, then publish, web app link and API key on the user''s yes. Works on Dify Cloud and self-hosted. Use when the user runs /dify:new-app, or asks to build, create or prototype an AI app, chatbot, agent, RAG / knowledge-base Q&A, or automation workflow on Dify.'
 argument-hint: '<what the app should do>'
 ---
 
-# Build a new Dify app
+# Build a new Dify app, end to end
 
-Goal: the user describes what they need and ends up with a Dify app that runs, has passed a few real test cases, and (if they say yes) is published with a link they can open.
+Goal: the user describes what they need and ends up with a Dify app that is built in their workspace, has passed real test cases, and, on their yes, is published with a web link and an API key. The user never has to open the Dify console.
 
 The user's request: $ARGUMENTS
 
-## 0. Make sure Dify is connected
+## 0. Connection
 
-Run `difyctl login --resume --json`. If difyctl is missing or there is no `email` in the result, follow the `setup` skill first, then come back here.
+Use the path the `setup` skill found in this session. If there is none yet, run the `setup` skill first, then come back. Two paths, same phases:
 
-If the user is on Dify Cloud or their server does not have `OPENAPI_ENABLED` on (the `setup` skill finds out), do not stop: build the app as an importable file with the `build-dsl` skill instead, and tell the user in one line why.
+- **Path A, difyctl** (server has the official `/openapi/v1`).
+- **Path B, console** (`dify_console.py`; Dify Cloud and self-hosted without the official API).
 
-## 1. Follow difyctl's build method, sized for a first app
+Below, `console` means `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_console.py"` and `dify_api` means `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_api.py"`.
 
-The `difyctl` skill in this plugin holds Dify's official build method: read its `references/build-workflow.md` now and follow it. It has four phases (spec, plan, build, hand over), each with a human gate. Do not skip a gate. Its rules win over anything below.
+## Path A: difyctl
 
-For a first app, keep each phase small so the user gets a running app quickly:
+Follow the `difyctl` skill's `references/build-workflow.md` (spec, plan, build, hand over, each with a human gate). For a first app keep it small: at most three questions, 2 to 5 requirements, 3 acceptance cases, the fewest nodes that meet the spec, built in one or two slices. Its rules win over anything here.
 
-- **Spec.** If the request is clear, draft the spec yourself from it and ask only what is missing, one question at a time, at most three. Aim for 2 to 5 requirements and 3 acceptance cases. Pick the mode and say why in one line: Workflow for one input to one output, Chatflow for a conversation.
-- **Resources.** Search the workspace first, as the method says: `difyctl get model --model-type llm --json`, `difyctl get tool --query <service> --json`, `difyctl get knowledge_base --query <words> --json`. Prefer what is already installed and configured. If the app needs a model and none is `active`, stop and help the user add a provider credential (see the `difyctl` skill's `references/plugins.md`); never paste a key into a file.
-- **Plan.** Keep the first version to the fewest nodes that meet the spec. Offer extras (more tools, branches, a knowledge base) as a later version, not now.
-- **Build.** Build it yourself in one or two slices. Keep the working files in `difyctl/<app-slug>/` in the current folder, as the method says.
-- **Hand over.** Run the acceptance cases, show pass or fail, then ask before publishing. After publishing, give the user the web app `url` and the app id.
+## Path B: console
 
-## 2. If the user is not sure what to build
+### 1. Spec (one gate)
 
-Offer three starting points that fit what you know about them, for example:
+Restate the request, ask only what is missing (at most three questions, one at a time), pick Workflow or Chatflow with one line on why. Look up real resources first so nothing is guessed:
 
-1. **Support assistant (Chatflow):** answers questions in the customer's language, from a knowledge base if they have one.
-2. **Document summarizer (Workflow):** takes a file or text, returns a structured summary.
-3. **Content generator (Workflow):** takes a topic and audience, returns a draft in a fixed format.
+```bash
+console models            # use a row's node_model as the LLM node's model; prefer "default"
+console datasets          # only if the app should search a knowledge base
+```
 
-Let them pick or describe their own, then go to step 1.
+If no LLM model is active, stop: the workspace needs a model provider key. Tell the user (this one step needs the console's Settings → Model Provider today).
 
-## 3. Close
+Write `dify-apps/<app-slug>/spec.md` (goal, mode, requirements R1.., 3 to 5 acceptance cases) and `cases.json` (format in the `test-app` skill). Get a yes.
 
-End with a short summary in the user's language:
+### 2. Build
 
-- app name, mode, app id, and the web app link if published;
-- the acceptance results;
-- how to change it later: "Tell me what to change and I will update the draft, test it, and ask before publishing again."
-- open the app in the Dify console at `<server>/app/<app_id>/workflow` to view or edit it visually.
+Write `dify-apps/<app-slug>/app.yml` following the `build-dsl` skill (its templates and `references/dsl-format.md`), using the real `node_model` and dataset ids from step 1. Check it until it prints OK:
 
-Never publish, delete, or change access settings without the user's explicit yes.
+```bash
+python3 "${CLAUDE_PLUGIN_ROOT}/scripts/validate_dsl.py" dify-apps/<app-slug>/app.yml
+```
+
+Import it as a new app and note the `app_id` in `spec.md`:
+
+```bash
+console import dify-apps/<app-slug>/app.yml
+```
+
+- `status: pending` (exit 3): the file's DSL version differs from the server's. Tell the user, and on a yes run again with `--yes`.
+- `missing_dependencies` not empty: list them; the app will fail where it uses them.
+- Later changes: edit `app.yml`, check it, and import over the same app with `--app-id <app_id>`. Never create a second copy.
+
+### 3. Test the draft
+
+```bash
+console test-draft <app_id> dify-apps/<app-slug>/cases.json
+```
+
+Grade `needs_judgement` cases yourself and show your reasoning. On a failure, read the failing node in the result, or `console run-detail <app_id> <workflow_run_id>`. Fix the smallest thing (usually a prompt), re-import with `--app-id`, and test again. Any change to the agreed spec needs the user's yes first.
+
+### 4. Release (only on the user's yes)
+
+Show the results per case and ask before going live. Then:
+
+```bash
+console publish <app_id> --name v1
+console webapp <app_id>                        # public link, if the user wants one
+console api-key <app_id> --alias <app-slug>    # saved for dify_api; the key is never printed
+dify_api app test <app-slug> dify-apps/<app-slug>/cases.json   # smoke test the published app through the API
+```
+
+Ask before turning the web app on or off (`--enable` / `--disable`).
+
+## Close
+
+Summarize in the user's language: app name, mode, app id, the web link and API alias if made, the test results, and how to change it later ("tell me what to change; I will update the draft, test it, and ask before publishing again"). Offer `/dify:connect-app` to call the app from Claude Code.
+
+Never publish, delete, or change access without the user's explicit yes.

@@ -12,7 +12,7 @@ If difyctl is signed in to the user's server (see the `setup` skill), prefer its
 
 ## 1. Key
 
-Run `dify_api key list`. If no alias fits, ask the user to create a key for the app (in Dify: the app's **API Access** page → **API Key**) and save it **in their own terminal**, so the key never enters the chat:
+Run `dify_api key list`. If no alias fits and the session is signed in through the console path (`setup` skill, Path B), create one without the console: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_console.py" api-key <app_id> --alias <alias>` (look up the id with `... dify_console.py apps`). Otherwise ask the user to create a key for the app (in Dify: the app's **API Access** page → **API Key**) and save it **in their own terminal**, so the key never enters the chat:
 
 ```bash
 python3 "<plugin root>/scripts/dify_api.py" key set <alias>                 # Dify Cloud
