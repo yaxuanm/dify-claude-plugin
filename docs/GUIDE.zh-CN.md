@@ -1,6 +1,6 @@
 # Dify Claude Code 插件：安装、测试与上架说明
 
-状态：v0.4.2 原型，尚未提交任何官方目录。
+状态：v0.4.3 原型，尚未提交任何官方目录。
 
 ## 一、插件能做什么
 
@@ -30,7 +30,7 @@
 
 路径 B 复用了 `yaxuanm/dify-ce-workflow-autobuilder-skill` 里的控制台调用（导入和确认、草稿运行和解析事件、发布、开启 API、创建 API Key），只把原来 `docker exec` 读 `SECRET_KEY` 自签 JWT 的登录换成了账号登录，所以远程自部署也能用。
 
-唯一可能还要进一次控制台的情况：工作区里一个可用的大模型都没有。这时需要先在“设置 → 模型供应商”里填 API Key。Cloud 新账号自带试用额度，一般不会遇到。
+工作区里没有可用的大模型时（新装的自部署一定会遇到，Cloud 试用额度用完也会），`/dify:setup` 和 `/dify:new-app` 会先停下来告诉用户，问他有哪家的 Key（OpenAI、Anthropic、Gemini、DeepSeek、通义、智谱、Moonshot、Azure，或者自建的兼容接口）。路径 A 上，插件找到对应的模型插件，**先问用户再安装**，然后给用户一条命令在他自己的终端里运行：输入 Key 时不显示，直接交给 difyctl 保存，不经过聊天、不写文件。路径 B 上，插件给出这台服务器的模型供应商页面地址（`<服务器>/integrations/model-provider`），用户在页面里填。
 
 ## 三、本地安装测试
 

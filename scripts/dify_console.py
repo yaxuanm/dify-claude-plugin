@@ -349,8 +349,10 @@ def cmd_models(a):
                                         "mode": (m.get("model_properties") or {}).get("mode") or "chat",
                                         "completion_params": {"temperature": 0.7}}})
     default = c.call("GET", "/workspaces/current/default-model", query={"model_type": a.type}).get("data")
+    active = [r for r in rows if r["status"] == "active"]
     out({"default": default and {"provider": (default.get("provider") or {}).get("provider"), "model": default.get("model")},
-         "models": [r for r in rows if r["status"] == "active"] or rows})
+         "active_count": len(active),
+         "models": active or rows})
 
 
 def cmd_datasets(a):

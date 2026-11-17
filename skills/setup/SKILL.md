@@ -68,6 +68,10 @@ Fallbacks, only if the browser path cannot work (no desktop, remote machine): `p
 python3 "<plugin root>/scripts/dify_console.py" login <server> --method password
 ```
 
-## 3. Confirm and hand off
+## 3. Check for a model
+
+Check that the workspace has at least one active LLM, following [`references/models.md`](references/models.md). If it has none, tell the user and help them add one before handing off; do not leave them to find out when the first app fails.
+
+## 4. Confirm and hand off
 
 Tell the user in two or three lines: server, account, workspace, which path, and the next step: "Tell me what app you need, or run `/dify:new-app <what it should do>`." If they already said what to build, go straight to the `new-app` skill.

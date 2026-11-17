@@ -12,7 +12,7 @@ The user's request: $ARGUMENTS
 
 ## 0. Connection
 
-Use the path the `setup` skill found in this session. If there is none yet, run the `setup` skill first, then come back; if the user has no Dify at all, it explains how to get one. Building without a connection gives a worse app, because only a signed-in session can see the workspace's models, plugins and knowledge bases. Two paths, same phases:
+Use the path the `setup` skill found in this session. If there is none yet, run the `setup` skill first, then come back; if the user has no Dify at all, it explains how to get one. Before writing the spec, check that the workspace has an active LLM as in `${CLAUDE_PLUGIN_ROOT}/skills/setup/references/models.md`; if it has none, say so and help the user add one first. Building without a connection gives a worse app, because only a signed-in session can see the workspace's models, plugins and knowledge bases. Two paths, same phases:
 
 - **Path A, difyctl** (server has the official `/openapi/v1`).
 - **Path B, console** (`dify_console.py`; servers without the official API).
@@ -36,7 +36,7 @@ console models            # use a row's node_model as the LLM node's model; pref
 console datasets          # only if the app should search a knowledge base
 ```
 
-If no LLM model is active, stop: the workspace needs a model provider key. Tell the user (this one step needs the console's Settings → Model Provider today).
+If `active_count` is 0, stop and follow `${CLAUDE_PLUGIN_ROOT}/skills/setup/references/models.md`.
 
 Write `dify-apps/<app-slug>/spec.md` (goal, mode, requirements R1.., 3 to 5 acceptance cases) and `cases.json` (format in the `test-app` skill). Get a yes.
 
