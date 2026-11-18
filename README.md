@@ -4,7 +4,7 @@ Build, test and publish [Dify](https://dify.ai) apps without leaving Claude Code
 
 Connect your Dify workspace (Dify Cloud or self-hosted), describe the app you need in plain words, and Claude builds a working Workflow or Chatflow app in your workspace, runs test cases against it, and publishes it when you say yes.
 
-> Status: prototype (v0.5.0). Not yet listed in any official plugin directory.
+> Status: prototype (v0.5.1). Not yet listed in any official plugin directory.
 
 ## What you get
 
@@ -95,7 +95,7 @@ skills/knowledge/                 /dify:knowledge
 skills/connect-app/               /dify:connect-app
 skills/doctor/                    /dify:doctor
 skills/difyctl/                   official difyctl skill (synced from upstream)
-scripts/                          difyctl status/installer, console client, DSL validator, Service/Knowledge API helper, upstream sync, doctor, model key entry
+scripts/                          difyctl status/installer, console client, DSL validator, Service/Knowledge API helper, upstream sync, doctor, model status, model key entry
 docs/install-for-agents.md        install steps written for an AI agent to follow
 assets/icon.png                   directory icon
 ```

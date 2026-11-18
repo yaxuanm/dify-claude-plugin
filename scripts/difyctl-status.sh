@@ -28,7 +28,10 @@ if [ -z "$bin" ]; then
   exit 0
 fi
 
-ver=$("$bin" version 2>/dev/null | head -n 1)
+raw=$("$bin" version 2>/dev/null | tr -d '\n\r')
+# Newer difyctl prints JSON over several lines; take the first "version" value.
+ver=$(printf '%s' "$raw" | grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' | head -n 1 | sed 's/.*"\([^"]*\)"$/\1/')
+[ -n "$ver" ] || ver=$(printf '%s' "$raw" | cut -c1-80)
 skills=false
 if "$bin" install skills --help >/dev/null 2>&1; then skills=true; fi
 

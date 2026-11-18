@@ -124,11 +124,10 @@ def main():
                 ws, _ = run([difyctl, "describe", "workspace", "--json"])
                 if ws:
                     report["workspace"] = {"id": find(ws, "id"), "name": find(ws, "name")}
-                models, err = run([difyctl, "get", "model", "--model-type", "llm", "--json"])
-                if models is not None:
-                    active = [m for m in rows(models) if isinstance(m, dict) and m.get("status") == "active"]
-                    report["models"] = {"active_count": len(active),
-                                        "active": [f"{m.get('provider')}/{m.get('model') or m.get('name')}" for m in active][:20]}
+                models, err = py("model_status.py", "--difyctl", difyctl)
+                if models and "active_count" in models:
+                    report["models"] = {"active_count": models["active_count"], "complete": models.get("complete"),
+                                        "active": [f"{m.get('provider')}/{m.get('model')}" for m in models.get("active") or []][:20]}
                 else:
                     problems.append(f"could not list models: {err}")
             else:
