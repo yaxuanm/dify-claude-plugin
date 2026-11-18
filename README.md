@@ -4,7 +4,7 @@ Build, test and publish [Dify](https://dify.ai) apps without leaving Claude Code
 
 Connect your Dify workspace (Dify Cloud or self-hosted), describe the app you need in plain words, and Claude builds a working Workflow or Chatflow app in your workspace, runs test cases against it, and publishes it when you say yes.
 
-> Status: prototype (v0.4.3). Not yet listed in any official plugin directory.
+> Status: prototype (v0.5.0). Not yet listed in any official plugin directory.
 
 ## What you get
 
@@ -15,6 +15,7 @@ Connect your Dify workspace (Dify Cloud or self-hosted), describe the app you ne
 | `/dify:test-app` | Runs acceptance cases against a published app through the Service API, reads failed runs and logs, suggests fixes. | Any Dify, including Cloud |
 | `/dify:knowledge` | Creates a knowledge base from local files and tests retrieval through the Knowledge API. | Any Dify, including Cloud |
 | `/dify:connect-app` | Turns a published Dify app into a tool Claude Code can call, through the app's built-in MCP server. | Any Dify, including Cloud |
+| `/dify:doctor` | One read-only health report: difyctl, path, sign-in, workspace, models, saved keys (masked), and what to fix. | Any Dify, including Cloud |
 | `difyctl` skill | Dify's official agent skill for the `difyctl` CLI: every operation the server publishes. | Self-hosted with `OPENAPI_ENABLED=true` |
 
 Claude also uses these skills on its own when you mention Dify or ask to build an AI app, chatbot, RAG Q&A or workflow.
@@ -43,6 +44,8 @@ Or from a shell:
 claude plugin marketplace add yaxuanm/dify-claude-plugin
 claude plugin install dify@dify-plugins
 ```
+
+Or let your agent do it: tell it "Install the Dify plugin by following https://raw.githubusercontent.com/yaxuanm/dify-claude-plugin/main/docs/install-for-agents.md". It installs the plugin and difyctl, then hands you to `/dify:setup`.
 
 ## Quick start
 
@@ -90,8 +93,10 @@ skills/new-app/                   /dify:new-app
 skills/test-app/                  /dify:test-app
 skills/knowledge/                 /dify:knowledge
 skills/connect-app/               /dify:connect-app
+skills/doctor/                    /dify:doctor
 skills/difyctl/                   official difyctl skill (synced from upstream)
-scripts/                          difyctl status/installer, console client, DSL validator, Service/Knowledge API helper, upstream sync
+scripts/                          difyctl status/installer, console client, DSL validator, Service/Knowledge API helper, upstream sync, doctor, model key entry
+docs/install-for-agents.md        install steps written for an AI agent to follow
 assets/icon.png                   directory icon
 ```
 

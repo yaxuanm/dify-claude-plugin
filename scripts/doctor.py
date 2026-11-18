@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+"""doctor.py: one read-only health report for the Dify plugin.
+
+Combines the server check (dify_console.py detect), the difyctl install check
+(difyctl-status.sh), sign-in state, current workspace, available LLMs and the
+saved API keys (masked). It changes nothing, logs in to nothing and never
+prints a secret. Prints one JSON object.
+
+usage: doctor.py [server-url]
+"""
+import json
+import os
+import pathlib
+import shutil
+import subprocess
+import sys
+
+HERE = pathlib.Path(__file__).resolve().parent
+ROOT = HERE.parent
+
+
+def run(cmd, timeout=60):
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    except (OSError, subprocess.TimeoutExpired) as e:
+        return None, str(e)
+    text = (r.stdout or "").strip()
+    try:
+        return json.loads(text), None if r.returncode == 0 else (r.stderr or text)[:500]
+    except ValueError:
+        return None, (r.stderr or text or f"exit {r.returncode}")[:500]
+
+
+def py(script, *args):
+    return run([sys.executable, "-I", str(HERE / script), *args])
+
+
+def find(obj, key):
+    """First value for key anywhere in a JSON tree."""
+    if isinstance(obj, dict):
+        if key in obj:
+            return obj[key]
+        for v in obj.values():
+            found = find(v, key)
+            if found is not None:
+                return found
+    elif isinstance(obj, list):
+        for v in obj:
+            found = find(v, key)
+            if found is not None:
+                return found
+    return None
+
+
+def rows(obj):
+    """Rows of a difyctl list result, whatever the envelope."""
+    if isinstance(obj, list):
+        return obj
+    if isinstance(obj, dict):
+        for k in ("data", "items", "rows", "models", "result"):
+            if isinstance(obj.get(k), list):
+                return obj[k]
+            if isinstance(obj.get(k), dict):
+                inner = rows(obj[k])
+                if inner:
+                    return inner
+    return []
+
+
+def main():
+    server_arg = sys.argv[1] if len(sys.argv) > 1 else None
+    report = {"plugin_version": None, "difyctl": None, "server": None, "path": None,
+              "signed_in": False, "account": None, "workspace": None,
+              "models": {"active_count": None, "active": []}, "keys": [], "problems": []}
+    problems = report["problems"]
+
+    try:
+        report["plugin_version"] = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text()).get("version")
+    except (OSError, ValueError):
+        pass
+
+    status, err = run(["sh", str(HERE / "difyctl-status.sh")])
+    report["difyctl"] = status or {"error": err}
+    difyctl = (status or {}).get("path") if (status or {}).get("installed") else None
+
+    # Which server: argument, else the console session, else ask.
+    state_file = pathlib.Path(os.environ.get("XDG_CONFIG_HOME", pathlib.Path.home() / ".config")) / "dify-claude-plugin" / "console.json"
+    try:
+        console_server = json.loads(state_file.read_text()).get("current")
+    except (OSError, ValueError):
+        console_server = None
+    server = server_arg or os.environ.get("DIFY_SERVER") or console_server
+
+    resume = None
+    if difyctl:
+        resume, _ = run([difyctl, "login", "--resume", "--json"])
+        if not server and resume:
+            server = find(resume, "server") or find(resume, "host")
+
+    if not server:
+        problems.append("no server known: run /dify:setup, or pass the server URL")
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return
+
+    detect, err = py("dify_console.py", "detect", server)
+    if not detect:
+        problems.append(f"server check failed: {err}")
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return
+    report["server"] = detect.get("server")
+    report["path"] = detect.get("path")
+    report["detect"] = {k: detect.get(k) for k in ("cloud", "edition", "openapi", "openapi_version", "env_token", "console_reachable")}
+
+    if detect.get("path") is None:
+        problems.append("no Dify answered at this URL: check the address and that the server is running")
+    elif detect.get("path") == "difyctl":
+        if not difyctl:
+            problems.append("difyctl is not installed: run /dify:setup to install it")
+        else:
+            email = find(resume, "email") if resume else None
+            if email or detect.get("env_token"):
+                report["signed_in"] = True
+                report["account"] = email or "DIFY_TOKEN"
+                ws, _ = run([difyctl, "describe", "workspace", "--json"])
+                if ws:
+                    report["workspace"] = {"id": find(ws, "id"), "name": find(ws, "name")}
+                models, err = run([difyctl, "get", "model", "--model-type", "llm", "--json"])
+                if models is not None:
+                    active = [m for m in rows(models) if isinstance(m, dict) and m.get("status") == "active"]
+                    report["models"] = {"active_count": len(active),
+                                        "active": [f"{m.get('provider')}/{m.get('model') or m.get('name')}" for m in active][:20]}
+                else:
+                    problems.append(f"could not list models: {err}")
+            else:
+                problems.append("difyctl is not signed in to this server: run /dify:setup")
+    else:  # console path
+        who, err = py("dify_console.py", "whoami")
+        if who and not who.get("error") and (who.get("server") or "").rstrip("/") == report["server"]:
+            report["signed_in"] = True
+            report["account"] = who.get("email")
+            report["workspace"] = who.get("workspace")
+            models, err = py("dify_console.py", "models")
+            if models and not models.get("error"):
+                report["models"] = {"active_count": models.get("active_count"),
+                                    "active": [f"{m.get('provider')}/{m.get('model')}" for m in models.get("models") or []
+                                               if m.get("status") == "active"][:20],
+                                    "default": models.get("default")}
+        else:
+            problems.append("not signed in to this server: run /dify:setup (opens a sign-in window)")
+
+    if report["signed_in"] and report["models"].get("active_count") == 0:
+        problems.append("the workspace has no active LLM: run /dify:setup to add a model provider")
+
+    keys, _ = py("dify_api.py", "key", "list")
+    report["keys"] = (keys or {}).get("keys", [])
+
+    print(json.dumps(report, ensure_ascii=False, indent=2))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,6 +1,6 @@
 # Dify Claude Code 插件：安装、测试与上架说明
 
-状态：v0.4.3 原型，尚未提交任何官方目录。
+状态：v0.5.0 原型，尚未提交任何官方目录。
 
 ## 一、插件能做什么
 
@@ -13,6 +13,7 @@
 | `/dify:test-app` | 用 Service API 对已发布应用跑验收用例、看日志 |
 | `/dify:knowledge` | 把本地文件建成知识库，测试召回 |
 | `/dify:connect-app` | 把已发布应用接成 Claude Code 可调用的工具（应用自带的 MCP 服务） |
+| `/dify:doctor` | 自检：difyctl 版本、走哪条路、是否登录、当前工作区、可用模型、已存的 Key（打码），并列出要修的问题 |
 | `difyctl` skill | Dify 官方 difyctl skill，原样打包 |
 
 ## 二、两条路是怎么自动选的
@@ -43,6 +44,8 @@ claude plugin install dify@dify-plugins
 ```
 
 推到 GitHub 之后，用户安装命令是 `/plugin marketplace add yaxuanm/dify-claude-plugin`，再 `/plugin install dify@dify-plugins`。
+
+也可以让 Agent 自己装：对它说「按 https://raw.githubusercontent.com/yaxuanm/dify-claude-plugin/main/docs/install-for-agents.md 安装 Dify 插件」。它会装插件和 difyctl（下载前先问你），然后让你运行 `/dify:setup`。这个链接要等仓库推到 GitHub 后才能用。
 
 ### 分版本测试
 
