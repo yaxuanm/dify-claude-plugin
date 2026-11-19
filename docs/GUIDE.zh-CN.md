@@ -1,6 +1,6 @@
 # Dify Claude Code 插件：安装、测试与上架说明
 
-状态：v0.5.1 原型，尚未提交任何官方目录。
+状态：v0.5.2 原型，尚未提交任何官方目录。
 
 ## 一、插件能做什么
 
@@ -59,10 +59,11 @@ python3 scripts/dify_console.py detect <服务器地址>
 
 #### 1. 社区版（本地 Docker）
 
-社区版默认没开官方接口，所以要测两轮：
+从 1.20 起社区版默认就开了官方接口（`OPENAPI_ENABLED` 默认 `true`），1.19 默认是关的。要测两轮：
 
-- **第一轮，默认配置**：`detect` 应该返回 `path: console`。
-- **第二轮，打开官方接口**：在 `docker/.env` 里加 `OPENAPI_ENABLED=true`，重启 `api` 和 `worker` 容器，再 `detect`，应该返回 `path: difyctl`。
+- **第一轮，官方接口开着**（1.20 默认，或 1.19 手动打开）：`detect` 应该返回 `path: difyctl`。
+- **第二轮，官方接口关掉**：在 `docker/.env` 里设 `OPENAPI_ENABLED=false`（1.19 不设就是关的），用 `docker compose up -d` 重建容器（普通 restart 不会重新读环境文件），再 `detect`，应该返回 `path: console`。
+- **可选，个人访问令牌**（1.20+）：在 Dify 的“账号”页建一个令牌，在你自己的终端里设 `DIFY_SERVER` 和 `DIFY_TOKEN` 再启动 Claude Code，`/dify:setup` 应该不用登录直接认出账号。
 
 服务器地址一般是 `http://localhost`（看你 Docker 映射的端口）。第一次打开要先在浏览器里建管理员账号，并在“设置 → 模型供应商”里配一个模型，这两步插件替代不了。
 

@@ -28,8 +28,8 @@ console detect <server>
 
 Read `path`:
 
-- `difyctl`: the server has the official API (Dify Cloud, and self-hosted or Enterprise servers with `OPENAPI_ENABLED` on). Go to **Path A**.
-- `console`: no official API (self-hosted with `OPENAPI_ENABLED` off, or an older version). Go to **Path B**: browser sign-in.
+- `difyctl`: the server has the official API (Dify Cloud; self-hosted and Enterprise 1.20 or later, where it is on by default; 1.19 servers that set `OPENAPI_ENABLED=true`). Go to **Path A**.
+- `console`: no official API (self-hosted 1.19 or older without `OPENAPI_ENABLED`, or a server that turned it off). Go to **Path B**: browser sign-in.
 - `null`: nothing answered as Dify at that URL. Tell the user what you tried, ask them to check the address (open it in the browser: it should show the Dify sign-in page; for self-hosted, make sure the server or Docker is running), and offer the three options above if they turn out not to have a Dify yet.
 
 Remember the path for the rest of the session and tell the user in one line which one you use and why. Do not ask them to choose.
@@ -39,7 +39,7 @@ Remember the path for the rest of the session and tell the user in one line whic
 1. `sh "${CLAUDE_PLUGIN_ROOT}/scripts/difyctl-status.sh"`. If `installed` is false or `skill_install_supported` is false, ask to install, then run `sh "${CLAUDE_PLUGIN_ROOT}/scripts/install-difyctl.sh"`. It installs the latest release; difyctl reads its commands from the server's catalog, so the latest works with any server that has the official API. Re-run it to upgrade. On Windows give the user `irm https://raw.githubusercontent.com/langgenius/dify/main/cli/scripts/install.ps1 | iex` to run.
 
    Do not run `difyctl install skills`: this plugin already ships the same skill as `dify:difyctl`, and a second copy in `~/.claude/skills` would load twice.
-2. If `env_token` from `detect` is true, the user has set `DIFY_SERVER` and `DIFY_TOKEN` in their shell (for CI or a headless machine). difyctl uses them and needs no login: run `difyctl describe workspace --json` to confirm, then go to item 4 of this Path A list (pick a workspace). Never ask the user to paste a token into the chat; they set it in their own shell before starting Claude Code.
+2. If `env_token` from `detect` is true, the user has set `DIFY_SERVER` and `DIFY_TOKEN` in their shell (for CI or a headless machine). difyctl uses them and needs no login: run `difyctl describe workspace --json` to confirm, then go to item 4 of this Path A list (pick a workspace). Never ask the user to paste a token into the chat; they set it in their own shell before starting Claude Code. On Dify 1.20 or later the token is a personal access token the user creates on their **Account** page in Dify, scoped to the workspaces they want; offer this when the user prefers it to a browser approval, or on a headless machine.
 
    Otherwise run `difyctl login --resume --json`. If it prints an `email`, skip to item 4 of this list.
 3. `difyctl login --server <server> --no-browser --no-wait --json`. Pass the printed `verification_uri` through `console device-url <server> <verification_uri>` and give the user its `url` (never the raw one: under Docker the server often prints an internal address such as `http://127.0.0.1:3000/device`) and the `user_code`. If `rewritten` is true, add one line: the server's `CONSOLE_WEB_URL` should be set to the address they open Dify at. Then ask them to approve and reply "done", and **end your turn**. Then run `difyctl login --resume --json` once. `status: pending` means not yet approved: say so and end the turn again. Add `--no-keyring` on machines without a lasting keychain (containers, remote boxes).
