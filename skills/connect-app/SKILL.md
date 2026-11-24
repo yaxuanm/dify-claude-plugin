@@ -1,7 +1,7 @@
 ---
 name: connect-app
 description: 'Use a published Dify app (Workflow, Chatflow or Agent) as a tool inside Claude Code, through the MCP server Dify gives every app. Works on Dify Cloud and self-hosted. Use when the user runs /dify:connect-app, or wants Claude Code to call, run or query one of their Dify apps, workflows, agents or knowledge-base Q&A bots.'
-argument-hint: '[app MCP server URL]'
+argument-hint: '[app name]'
 ---
 
 # Connect a Dify app to Claude Code
@@ -12,14 +12,16 @@ Every Dify app can be published as an MCP server (streamable HTTP). Its URL look
 
 ## 1. Get the URL
 
-If the user passed a URL (`$ARGUMENTS`), use it. Otherwise tell them how to get one:
+The URL never goes through the chat. If the user pastes one anyway, do not repeat it, use it once for step 2, and suggest they regenerate it on the MCP Server card afterwards, because chat history keeps it.
+
+Tell them how to get one:
 
 1. Open the app in Dify. It must be **published**.
 2. On the app's **Overview** page (Monitoring), find the **MCP Server** card (中文界面：「MCP 服务」).
 3. Click to enable it. Dify asks for a description of the tool and of each input; write one that says when to use the app. Claude reads it to decide when to call the tool.
-4. Copy the **Server URL** and paste it here.
+4. Copy the **Server URL**. Do not paste it here; step 2 reads it in their terminal.
 
-Check that it ends in `/mcp/server/<code>/mcp`. Never print the full URL back in later messages; refer to it by the app name.
+**Name the tool in English.** Claude Code builds tool names from the app's MCP tool name, and non-Latin characters become underscores: a Chinese app name turns into `mcp__dify-<slug>__________`, which nobody can recognise in permission prompts or allow lists. If the app name is not in English, ask the user to give the app an English name in Dify (the tool name follows it) before enabling the card, and keep the Chinese name in the description.
 
 ## 2. Add it to Claude Code
 
@@ -31,11 +33,13 @@ Ask where it should be available:
 - **This project only, just me**: `--scope local`.
 - Do not use `--scope project` unless the user insists: it writes the URL into `.mcp.json`, which is usually committed and would leak access to the app.
 
+Give the user this to run in **their own terminal** (bash or zsh). It asks for the URL without echoing it and never shows it to Claude:
+
 ```bash
-claude mcp add --transport http --scope user dify-<app-slug> '<server url>'
+printf 'Dify MCP Server URL: '; read -rs U; echo; case "$U" in */mcp/server/*/mcp) claude mcp add --transport http --scope user dify-<app-slug> "$U" ;; *) echo "That does not look like a Dify MCP Server URL (…/mcp/server/<code>/mcp)" ;; esac; unset U
 ```
 
-If `claude` is not on PATH in this shell, give the user the command to run themselves.
+Swap `--scope user` for `--scope local` if they chose this project only. Wait for them to say it is done.
 
 ## 3. Load and test
 

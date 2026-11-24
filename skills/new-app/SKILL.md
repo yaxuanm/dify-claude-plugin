@@ -19,11 +19,15 @@ Use the path the `setup` skill found in this session. If there is none yet, run 
 
 If the user will not sign in at all, follow Path B steps 1 and 2 without the `console` lookups and hand over only the checked `app.yml`. Use the template's default model and only the node types in the reference, and tell them plainly: import it in Dify (Studio → Create app → Import DSL file), pick a model in each LLM node, then run the cases from `spec.md`. Offer to finish the job once they sign in.
 
+**App name:** propose a short English name (for example `feedback-sentiment`) even when the user writes in another language, and put the native-language title in the description. Dify turns the app name into the tool name when the app is later connected through MCP (`/dify:connect-app`), and non-Latin characters become underscores there.
+
 Below, `console` means `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_console.py"` and `dify_api` means `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_api.py"`.
 
 ## Path A: difyctl
 
 Follow the `difyctl` skill's `references/build-workflow.md` (spec, plan, build, hand over, each with a human gate). For a first app keep it small: at most three questions, 2 to 5 requirements, 3 acceptance cases, the fewest nodes that meet the spec, built in one or two slices. Its rules win over anything here.
+
+After hand over, on the user's yes to go live: publish and turn on the web app with the operations `difyctl help publish` and `difyctl help web app` find. For an API key, look for one with `difyctl help api key`. If it finds one and it would print the key, give the user that command to run in their own terminal, piped into `dify_api key set <app-slug> --base-url <server>/v1`, so the key never reaches the chat. If the catalog has none, say so plainly, then give the user the console path (app → **API Access** → **API Key** → create) and have them save it in their own terminal with `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_api.py" key set <app-slug> --base-url <server>/v1`. Never ask for the key in the chat. Then smoke test with `dify_api app test <app-slug> <cases.json>`.
 
 ## Path B: console
 

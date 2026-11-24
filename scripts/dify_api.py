@@ -23,7 +23,7 @@ Apps (app key)
 
 Knowledge (dataset key)
   kb list <alias>
-  kb create <alias> --name NAME [--description TEXT]
+  kb create <alias> --name NAME [--description TEXT] [--embedding-model M --embedding-provider P]
   kb add <alias> <dataset_id> <path> [<path> ...]   .txt/.md as text, others as file upload
   kb status <alias> <dataset_id> <batch>
   kb retrieve <alias> <dataset_id> --query TEXT [--top-k N]
@@ -292,8 +292,13 @@ def cmd_kb(a):
         out({"datasets": [{k: d.get(k) for k in ("id", "name", "description", "document_count", "indexing_technique")}
                           for d in r.get("data") or []]})
     if a.action == "create":
-        r = request(cfg, "POST", "/datasets", {"name": a.name, "description": a.description or "",
-                                               "indexing_technique": "high_quality", "permission": "only_me"})
+        body = {"name": a.name, "description": a.description or "",
+                "indexing_technique": "high_quality", "permission": "only_me"}
+        if a.embedding_model:
+            # Without these Dify uses the workspace default embedding model and refuses when none is set.
+            body["embedding_model"] = a.embedding_model
+            body["embedding_model_provider"] = a.embedding_provider
+        r = request(cfg, "POST", "/datasets", body)
         out({"id": r.get("id"), "name": r.get("name"), "indexing_technique": r.get("indexing_technique")})
     if a.action == "add":
         added = []
@@ -368,6 +373,8 @@ def main():
     kb = sub.add_parser("kb").add_subparsers(dest="action", required=True)
     x = kb.add_parser("list"); x.add_argument("alias")
     x = kb.add_parser("create"); x.add_argument("alias"); x.add_argument("--name", required=True); x.add_argument("--description")
+    x.add_argument("--embedding-model", help="embedding model name; default: the workspace default")
+    x.add_argument("--embedding-provider", help="its provider, e.g. langgenius/openai/openai")
     x = kb.add_parser("add"); x.add_argument("alias"); x.add_argument("dataset_id"); x.add_argument("paths", nargs="+")
     x = kb.add_parser("status"); x.add_argument("alias"); x.add_argument("dataset_id"); x.add_argument("batch")
     x = kb.add_parser("retrieve"); x.add_argument("alias"); x.add_argument("dataset_id"); x.add_argument("--query", required=True); x.add_argument("--top-k", type=int)

@@ -19,13 +19,19 @@ python3 "<plugin root>/scripts/dify_api.py" key set kb --base-url https://<host>
 
 ## 2. Pick or create the knowledge base
 
-`dify_api kb list kb`. Reuse one if the user names it; otherwise:
+`dify_api kb list kb`. Reuse one if the user names it.
+
+Before creating one, check for an embedding model. New knowledge bases use high-quality (embedding) indexing, and Dify refuses to create one when the workspace has no default embedding model, which is the normal state of a new workspace.
+
+- Path A: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/model_status.py" --model-type text-embedding`. It lists active embedding models but not the default.
+- Path B: `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_console.py" models --type text-embedding`. `default` is the workspace default.
+
+If there is no active embedding model, say so and follow `${CLAUDE_PLUGIN_ROOT}/skills/setup/references/models.md` to add a provider that has one (OpenAI's covers both chat and embeddings). Otherwise pick the default, or on Path A the first active one (prefer a `text-embedding-3-small`-class model), name it to the user, and pass it explicitly so a missing default does not matter:
 
 ```bash
-dify_api kb create kb --name "<name>" --description "<what is in it>"
+dify_api kb create kb --name "<name>" --description "<what is in it>" \
+  --embedding-model <model> --embedding-provider <provider>
 ```
-
-New knowledge bases use high-quality (embedding) indexing, which needs an embedding model set up in the workspace. If creation fails on the model, tell the user to set a default embedding model in Dify's model settings.
 
 ## 3. Upload
 

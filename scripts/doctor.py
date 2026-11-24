@@ -67,6 +67,13 @@ def rows(obj):
     return []
 
 
+def version_tuple(v):
+    """'v1.20.0' or '1.20.0-rc1' -> (1, 20, 0); unknown -> ()."""
+    import re
+    m = re.match(r"v?(\d+)\.(\d+)(?:\.(\d+))?", str(v).strip())
+    return tuple(int(x or 0) for x in m.groups()) if m else ()
+
+
 def main():
     server_arg = sys.argv[1] if len(sys.argv) > 1 else None
     report = {"plugin_version": None, "difyctl": None, "server": None, "path": None,
@@ -146,6 +153,12 @@ def main():
                                     "default": models.get("default")}
         else:
             problems.append("not signed in to this server: run /dify:setup (opens a sign-in window)")
+
+    # difyctl reads commands from the server, but an older client can miss newer flags and fixes.
+    cver, sver = (report["difyctl"] or {}).get("version"), (report.get("detect") or {}).get("openapi_version")
+    if difyctl and version_tuple(cver or "") and version_tuple(sver or "") and version_tuple(cver) < version_tuple(sver):
+        problems.append(f"difyctl {cver} is older than the server ({sver}): re-run "
+                        "scripts/install-difyctl.sh, or /dify:setup, to upgrade")
 
     if report["signed_in"] and report["models"].get("active_count") == 0:
         problems.append("the workspace has no active LLM: run /dify:setup to add a model provider")
