@@ -156,6 +156,8 @@ def main():
 
     # difyctl reads commands from the server, but an older client can miss newer flags and fixes.
     cver, sver = (report["difyctl"] or {}).get("version"), (report.get("detect") or {}).get("openapi_version")
+    if isinstance(sver, dict):  # detect returns the whole /_version body: {"version": "1.20.0", ...}
+        sver = sver.get("version")
     if difyctl and version_tuple(cver or "") and version_tuple(sver or "") and version_tuple(cver) < version_tuple(sver):
         problems.append(f"difyctl {cver} is older than the server ({sver}): re-run "
                         "scripts/install-difyctl.sh, or /dify:setup, to upgrade")
