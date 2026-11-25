@@ -87,7 +87,10 @@ def main():
     report["runtime"] = where
     remote = bool((where or {}).get("remote"))
     if remote:
-        problems.append("CLOUD SANDBOX: " + where["note"])
+        # The plugin is not meant for cloud sessions: say so and stop.
+        problems.append(where["note"])
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+        return
 
     try:
         report["plugin_version"] = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text()).get("version")

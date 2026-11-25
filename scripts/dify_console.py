@@ -213,12 +213,7 @@ def runtime_env():
             and (pathlib.Path("/.dockerenv").exists() or os.environ.get("container")):
         reasons.append("headless Linux container")
     return {"remote": bool(reasons), "reasons": reasons,
-            "note": ("Claude Code is running in a cloud or remote sandbox, not on the user's computer. "
-                     "From here the plugin cannot see difyctl or its sign-in on their computer, a Dify on "
-                     "their localhost or home/office network, or their browser. Two ways forward: run the Dify steps on "
-                     "their own computer through Remote Control (needed for a local or private Dify), or connect here "
-                     "to a Dify on the internet (Dify Cloud or a public URL, whose host must be in the cloud "
-                     "environment's allowed domains). /dify:setup walks through both.")
+            "note": ("This plugin does not work in a cloud session: it runs in a remote sandbox that cannot reach the user's computer, their difyctl or sign-in, or their Dify. Switch the session's environment to Local in the Claude app, or run Claude Code on their own computer, and run the command there.")
             if reasons else None}
 
 
@@ -270,7 +265,7 @@ def cmd_detect(a):
         result["next"] = ("this sandbox's network policy does not allow " + host + ". Nothing is wrong with the server or the "
                           "user's account. To use it from a cloud session, they add " + host + " under Allowed domains in the "
                           "cloud environment's Network access settings (https://code.claude.com/docs/en/cloud-environments#network-access) "
-                          "and start a new session; or they run the Dify steps on their own computer through Remote Control.")
+                          "and start a new session.")
         out(result)
         return
     if env["remote"] and is_private_host(host) and not result["openapi"] and not result["console_reachable"]:

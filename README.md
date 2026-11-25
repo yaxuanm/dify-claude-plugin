@@ -4,7 +4,7 @@ Build, test and publish [Dify](https://dify.ai) apps without leaving Claude Code
 
 Connect your Dify workspace (Dify Cloud or self-hosted), describe the app you need in plain words, and Claude builds a working Workflow or Chatflow app in your workspace, runs test cases against it, and publishes it when you say yes.
 
-> Status: prototype (v0.5.6). Not yet listed in any official plugin directory.
+> Status: prototype (v0.5.7). Not yet listed in any official plugin directory.
 
 ## What you get
 
@@ -22,7 +22,7 @@ Claude also uses these skills on its own when you mention Dify or ask to build a
 
 ## Requirements
 
-- Claude Code running **on your own computer** (CLI, desktop or IDE extension). In a cloud session (Claude Code on the web, or a cloud session started from the desktop or phone app) the plugin runs in a remote sandbox: it cannot see the difyctl, sign-in or local Dify on your computer, and works only with Dify Cloud or a Dify with a public URL. `/dify:setup` and `/dify:doctor` detect this and offer two ways forward: run the Dify steps on your computer through Remote Control (for a local or private Dify), or connect the cloud session to Dify Cloud or a public Dify, after adding its host (for Dify Cloud: `cloud.dify.ai`, `api.dify.ai`) to the cloud environment's allowed domains.
+- Claude Code running **on your own computer** (CLI, desktop or IDE extension). In a cloud session (Claude Code on the web, or a cloud session started from the desktop or phone app) the plugin runs in a remote sandbox: it cannot see the difyctl, sign-in or Dify on your computer, so the plugin does not work there. `/dify:setup` and `/dify:doctor` detect it and tell you to switch the session to Local.
 - A Dify account: [Dify Cloud](https://cloud.dify.ai) (free sign-up) or a self-hosted / Enterprise server ([Docker install](https://docs.dify.ai/getting-started/install-self-hosted)). No Dify yet? `/dify:setup` walks you through getting one.
 - Only on self-hosted servers without the official API: Chrome, Edge, Brave or Chromium on the same machine, for the one-time sign-in window.
 - Python 3 for the offline DSL check and the API helper (the DSL check in the fallback path needs PyYAML).

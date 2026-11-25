@@ -16,19 +16,7 @@ Talk to the user in their language. Keep each message short: what you did, what 
 console where
 ```
 
-If `remote` is false, go to section 1.
-
-If `remote` is true, Claude Code is running in a cloud sandbox, not on the user's computer (for example a chat opened from **Try it** on the Plugins page). Before anything else, tell the user that in two plain sentences, and that from here the plugin cannot see anything on their computer: their difyctl and its sign-in, a Dify on `localhost` or their office network, or their browser. That is expected, not a fault: never tell them their install is broken or ask them to sign in again because of it. Then ask which way they want, recommending the first when their Dify is local or on a private network:
-
-**A. Use their computer (local or private Dify).** Run the Dify steps on their own computer through Remote Control, where difyctl can reach `localhost`.
-- If your tools can start a Remote Control session on their computer, offer to do so, and have that session run this skill there.
-- Otherwise give them these steps: install the plugin in Claude Code on their computer (`claude plugin marketplace add yaxuanm/dify-claude-plugin`, then `claude plugin install dify@dify-plugins`); turn on Remote Control in the Claude desktop app (**Settings → Claude Code → Remote Control**, switch on, **Add folder**), or run `claude remote-control` in a terminal in the folder to work in; then open that session from the Claude app and run `/dify:setup` there.
-- A linked "computer" that only offers a Linux VM or screen control is not enough: the VM cannot reach the computer's `localhost`.
-
-**B. Stay here with a Dify on the internet**: Dify Cloud (`https://cloud.dify.ai`) or a self-hosted server with a public URL. Go on to section 1 with that URL. Notes for the sandbox:
-- Its network only reaches allowed hosts. If `detect` returns `network_blocked`, say which host and that they add it under **Allowed domains** in the cloud environment's **Network access** settings (<https://code.claude.com/docs/en/cloud-environments#network-access>), then start a new session. Dify Cloud is not allowed by default: it needs `cloud.dify.ai`, plus `api.dify.ai` for the app and knowledge APIs used by `test-app` and `knowledge`.
-- Use Path A (device code, approved in their own browser) with `--no-keyring`, or a personal access token they set as `DIFY_SERVER` and `DIFY_TOKEN` in the environment's settings. The browser sign-in of Path B cannot open a window here.
-- The sign-in and any saved keys live in this sandbox only and are gone when it is recycled.
+If `remote` is true, stop here. Tell the user in one or two short sentences, in their language, that this plugin does not work in a cloud session, and that they should switch the session's environment to **Local** in the Claude app (or run Claude Code on their own computer) and run `/dify:setup` there. Do not run any other step, install anything, or ask them to sign in.
 
 ## 1. Server
 
