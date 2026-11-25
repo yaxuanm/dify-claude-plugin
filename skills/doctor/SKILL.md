@@ -14,7 +14,7 @@ python3 "${CLAUDE_PLUGIN_ROOT}/scripts/doctor.py" $ARGUMENTS
 
 It only reads: it logs in to nothing, installs nothing and never prints a secret.
 
-If `runtime.remote` is true, open the report with that, in one or two plain sentences: this session runs in a cloud sandbox, so the difyctl, sign-in and local Dify on their computer cannot be seen from here, and that is expected. Do not report those as failures or push them to sign in again; recommend running `/dify:doctor` in Claude Code on their own computer, and offer `/dify:setup` here only for Dify Cloud or a Dify with a public URL.
+If `runtime.remote` is true, open the report with that, in one or two plain sentences: this session runs in a cloud sandbox, so the difyctl, sign-in and local Dify on their computer cannot be seen from here, and that is expected. Do not report those as failures or push them to sign in again; offer the two ways forward from `/dify:setup` section 0: their own computer through Remote Control, or a Dify on the internet here (whose host must be in the environment's allowed domains).
 
 Report to the user in their language, as a short checklist with ✓ or ✗ per line:
 

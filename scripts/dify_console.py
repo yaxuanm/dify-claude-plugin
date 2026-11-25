@@ -184,7 +184,12 @@ def probe(url):
             return r.status, (json.loads(raw) if raw.strip().startswith("{") else None)
     except urllib.error.HTTPError as e:
         return e.code, None
-    except (urllib.error.URLError, ValueError, OSError):
+    except urllib.error.URLError as e:
+        # Cloud sandboxes send traffic through an allow-list proxy; a refused host shows up as a tunnel 403.
+        if "Tunnel connection failed: 403" in str(e.reason):
+            return "blocked", None
+        return None, None
+    except (ValueError, OSError):
         return None, None
 
 
@@ -210,8 +215,10 @@ def runtime_env():
     return {"remote": bool(reasons), "reasons": reasons,
             "note": ("Claude Code is running in a cloud or remote sandbox, not on the user's computer. "
                      "From here the plugin cannot see difyctl or its sign-in on their computer, a Dify on "
-                     "their localhost or home/office network, or their browser. Use a Dify reachable from the "
-                     "internet (Dify Cloud or a public URL), or run Claude Code on their own computer.")
+                     "their localhost or home/office network, or their browser. Two ways forward: run the Dify steps on "
+                     "their own computer through Remote Control (needed for a local or private Dify), or connect here "
+                     "to a Dify on the internet (Dify Cloud or a public URL, whose host must be in the cloud "
+                     "environment's allowed domains). /dify:setup walks through both.")
             if reasons else None}
 
 
@@ -256,6 +263,16 @@ def cmd_detect(a):
     }
     env = runtime_env()
     result["runtime"] = env
+    if "blocked" in (oa_status, fs_status):
+        result["openapi"] = result["console_reachable"] = False
+        result["path"] = None
+        result["network_blocked"] = True
+        result["next"] = ("this sandbox's network policy does not allow " + host + ". Nothing is wrong with the server or the "
+                          "user's account. To use it from a cloud session, they add " + host + " under Allowed domains in the "
+                          "cloud environment's Network access settings (https://code.claude.com/docs/en/cloud-environments#network-access) "
+                          "and start a new session; or they run the Dify steps on their own computer through Remote Control.")
+        out(result)
+        return
     if env["remote"] and is_private_host(host) and not result["openapi"] and not result["console_reachable"]:
         result["path"] = None
         result["next"] = ("this session runs in a cloud sandbox, and " + host + " is a local or private address on the "

@@ -41,6 +41,8 @@ printf 'Dify MCP Server URL: '; read -rs U; echo; case "$U" in */mcp/server/*/mc
 
 Swap `--scope user` for `--scope local` if they chose this project only. Wait for them to say it is done.
 
+In a cloud sandbox (`console where` says `remote`), the user's own terminal is on their computer, so this command adds the tool to Claude Code there, not to this sandbox. That is usually what they want. The sandbox also needs the Dify API host in its allowed domains to call the app.
+
 ## 3. Load and test
 
 Tell the user to run `/mcp` (or restart Claude Code) so the new server loads, then check that `dify-<app-slug>` shows as connected.

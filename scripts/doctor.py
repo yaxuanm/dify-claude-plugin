@@ -131,7 +131,9 @@ def main():
     report["path"] = detect.get("path")
     report["detect"] = {k: detect.get(k) for k in ("cloud", "edition", "openapi", "openapi_version", "env_token", "console_reachable")}
 
-    if detect.get("path") is None:
+    if detect.get("network_blocked"):
+        problems.append(detect.get("next"))
+    elif detect.get("path") is None:
         if remote:
             problems.append(f"{report['server']} cannot be reached from this cloud sandbox. If it is on the user's "
                             "computer or network, that is expected; use Claude Code on their computer for it")

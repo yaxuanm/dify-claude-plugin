@@ -1,6 +1,6 @@
 # Dify Claude Code 插件：安装、测试与上架说明
 
-状态：v0.5.5 原型，尚未提交任何官方目录。
+状态：v0.5.6 原型，尚未提交任何官方目录。
 
 ## 一、插件能做什么
 
@@ -16,7 +16,9 @@
 | `/dify:doctor` | 自检：difyctl 版本、走哪条路、是否登录、当前工作区、可用模型、已存的 Key（打码），并列出要修的问题 |
 | `difyctl` skill | Dify 官方 difyctl skill，原样打包 |
 
-> **要在自己电脑上的 Claude Code 里用。** 如果在云端会话里装（网页版 Claude Code，或从桌面、手机 App 开的云端会话），插件跑在远程沙盒里，看不到你电脑上的 difyctl、登录状态和本机的 Dify，只能连 Dify Cloud 或有公网地址的 Dify。`/dify:setup` 和 `/dify:doctor` 检测到云端会话时会先直接说明，不会再让你重新登录。
+> **云端会话**（在 Plugins 页点 Try it 打开的对话、网页版 Claude Code、从桌面或手机 App 开的云端会话）：插件跑在远程沙盒里，看不到你电脑上的 difyctl、登录状态和本机的 Dify。`/dify:setup` 和 `/dify:doctor` 检测到以后，会先说明这一点，然后给两条路：
+> 1. **连你的电脑**（本机或内网的 Dify 必须走这条）：通过 Remote Control 在你电脑上跑。桌面 App 里打开 设置 → Claude Code → Remote Control，再添加文件夹；也可以在终端里运行 `claude remote-control`。之后在那个会话里跑 `/dify:setup`。你电脑上的 Claude Code 也要装好这个插件。
+> 2. **留在云端，连 Dify Cloud 或有公网地址的 Dify**：云端环境的网络默认不放行 Dify，需要先在云端环境的 Network access 里把 `cloud.dify.ai` 和 `api.dify.ai`（自部署就填你自己的域名）加进 Allowed domains，再开一个新会话。
 
 ## 二、两条路是怎么自动选的
 
