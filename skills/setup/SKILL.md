@@ -10,6 +10,19 @@ Goal: the user is signed in and has a workspace selected, without opening the Di
 
 Talk to the user in their language. Keep each message short: what you did, what they need to do. Below, `console` means `python3 "${CLAUDE_PLUGIN_ROOT}/scripts/dify_console.py"`.
 
+## 0. Where is this running?
+
+```bash
+console where
+```
+
+If `remote` is true, Claude Code is running in a cloud or remote sandbox, not on the user's computer. Say this first, in one or two plain sentences, before asking anything: nothing on their computer is reachable from here, so their own difyctl and its sign-in, a Dify on `localhost` or their office network, and their browser cannot be used. This is expected, not a fault, so do not tell them their install is broken and do not ask them to sign in again. Then offer:
+
+- **Use Claude Code on their own computer** (recommended when their Dify is local or on a private network, or they already set the plugin up there).
+- **Connect here to a Dify reachable from the internet**: Dify Cloud or a server with a public URL. This installs a separate difyctl in the sandbox, and the sign-in only applies to this session.
+
+Continue only if they pick the second. In a sandbox the browser sign-in of Path B cannot open a window: use Path A (device code, which they approve in their own browser), or, for a server without the official API, the `--method password` or `--method email-code` sign-in typed in a terminal they control; if neither works, recommend their own computer.
+
 ## 1. Server
 
 If the user passed a URL (`$ARGUMENTS`), use it. Otherwise ask which Dify they use: **Dify Cloud** (`https://cloud.dify.ai`), their own server (the URL they open Dify at), or **none yet**. Never guess a self-hosted URL.
@@ -17,7 +30,7 @@ If the user passed a URL (`$ARGUMENTS`), use it. Otherwise ask which Dify they u
 If they have no Dify yet, say so plainly and offer three ways forward, then wait for their pick:
 
 1. **Dify Cloud** (quickest): sign up free at <https://cloud.dify.ai>, with any email or a Google / GitHub account, then come back and continue here with `https://cloud.dify.ai`. New accounts include trial model credits.
-2. **Self-host with Docker**: follow <https://docs.dify.ai/getting-started/install-self-hosted> (needs Docker; about 10 minutes): clone `langgenius/dify`, then in `docker/` run `cp .env.example .env` and `docker compose up -d`. They open `http://localhost/install` to create the admin account and add a model provider key, then come back with that URL. To use the official API there, add `OPENAPI_ENABLED=true` to `docker/.env` and restart.
+2. **Self-host with Docker**: follow <https://docs.dify.ai/getting-started/install-self-hosted> (needs Docker; about 10 minutes): clone `langgenius/dify`, then in `docker/` run `cp .env.example .env` and `docker compose up -d`. They open `http://localhost/install` to create the admin account and add a model provider key, then come back with that URL. Dify 1.20 and later have the official API on by default; on 1.19 add `OPENAPI_ENABLED=true` to `docker/.env` and run `docker compose up -d`.
 3. **No account for now**: the `new-app` skill can still write a checked `app.yml` to import later; it cannot test or publish it.
 
 ## 2. Detect

@@ -12,6 +12,8 @@ A user can tell their coding agent: "Install the Dify plugin by following <URL o
 
 Run `claude --version`. If it is missing, stop and point the user to <https://docs.claude.com/en/docs/claude-code/setup>. This plugin is for Claude Code.
 
+If `CLAUDE_CODE_REMOTE` is `true`, you are in a cloud session, not on the user's computer. Say so before installing: the plugin will work here only with Dify Cloud or a Dify with a public URL, and anything on their computer (difyctl, its sign-in, a local Dify) cannot be reached. Recommend installing it in Claude Code on their own computer, and continue here only if they want it.
+
 ## 2. Add the marketplace and install the plugin
 
 ```bash

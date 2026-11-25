@@ -78,8 +78,16 @@ def main():
     server_arg = sys.argv[1] if len(sys.argv) > 1 else None
     report = {"plugin_version": None, "difyctl": None, "server": None, "path": None,
               "signed_in": False, "account": None, "workspace": None,
-              "models": {"active_count": None, "active": []}, "keys": [], "problems": []}
+              "models": {"active_count": None, "active": []}, "keys": [], "problems": [], "runtime": None}
     problems = report["problems"]
+
+    # First: is this the user's own computer? In a cloud sandbox nothing on their computer is reachable,
+    # so "not installed / not signed in" would be misleading.
+    where, _ = py("dify_console.py", "where")
+    report["runtime"] = where
+    remote = bool((where or {}).get("remote"))
+    if remote:
+        problems.append("CLOUD SANDBOX: " + where["note"])
 
     try:
         report["plugin_version"] = json.loads((ROOT / ".claude-plugin" / "plugin.json").read_text()).get("version")
@@ -105,7 +113,12 @@ def main():
             server = find(resume, "server") or find(resume, "host")
 
     if not server:
-        problems.append("no server known: run /dify:setup, or pass the server URL")
+        if remote:
+            problems.append("no Dify is set up in this cloud session. That is expected: the user's own setup "
+                            "lives on their computer. Only connect here if they want to use Dify Cloud or a Dify "
+                            "with a public URL (/dify:setup)")
+        else:
+            problems.append("no server known: run /dify:setup, or pass the server URL")
         print(json.dumps(report, ensure_ascii=False, indent=2))
         return
 
@@ -119,10 +132,16 @@ def main():
     report["detect"] = {k: detect.get(k) for k in ("cloud", "edition", "openapi", "openapi_version", "env_token", "console_reachable")}
 
     if detect.get("path") is None:
-        problems.append("no Dify answered at this URL: check the address and that the server is running")
+        if remote:
+            problems.append(f"{report['server']} cannot be reached from this cloud sandbox. If it is on the user's "
+                            "computer or network, that is expected; use Claude Code on their computer for it")
+        else:
+            problems.append("no Dify answered at this URL: check the address and that the server is running")
     elif detect.get("path") == "difyctl":
         if not difyctl:
-            problems.append("difyctl is not installed: run /dify:setup to install it")
+            problems.append("difyctl is not installed in this cloud sandbox (the one on the user's computer is not "
+                            "visible here): /dify:setup can install a separate copy here if they want to use this server "
+                            "from this session" if remote else "difyctl is not installed: run /dify:setup to install it")
         else:
             email = find(resume, "email") if resume else None
             if email or detect.get("env_token"):

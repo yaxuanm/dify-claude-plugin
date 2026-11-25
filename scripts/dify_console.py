@@ -12,6 +12,7 @@ easy to read.
 
 Setup
   detect <server-url>              which path works: openapi (difyctl) or console, and which logins
+  where                            is this a cloud/remote sandbox (cannot reach the user's computer)?
   login [<server-url>] [--method browser|password|email-code]
                                    browser (default): opens a temporary browser window on the Dify
                                    sign-in page; any sign-in method works. password/email-code:
@@ -187,6 +188,49 @@ def probe(url):
         return None, None
 
 
+# ---------- where this runs ----------
+
+def runtime_env():
+    """Is Claude Code running on the user's own computer, or in a cloud/remote sandbox?
+
+    In a cloud sandbox (Claude Code on the web, a cloud session from the desktop or phone app,
+    a remote container) nothing on the user's computer is reachable: not their difyctl or its
+    login, not a Dify on their localhost or home network, not their browser.
+    """
+    reasons = []
+    if os.environ.get("CLAUDE_CODE_REMOTE", "").lower() in ("1", "true", "yes"):
+        reasons.append("CLAUDE_CODE_REMOTE is set (Claude Code cloud session)")
+    if os.environ.get("CLAUDE_CODE_REMOTE_SESSION_ID") or os.environ.get("CLAUDE_CODE_CONTAINER_ID"):
+        reasons.append("cloud session/container id is set")
+    if os.environ.get("CODESPACES") or os.environ.get("GITPOD_WORKSPACE_ID"):
+        reasons.append("hosted dev environment (Codespaces/Gitpod)")
+    if sys.platform.startswith("linux") and not (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")) \
+            and (pathlib.Path("/.dockerenv").exists() or os.environ.get("container")):
+        reasons.append("headless Linux container")
+    return {"remote": bool(reasons), "reasons": reasons,
+            "note": ("Claude Code is running in a cloud or remote sandbox, not on the user's computer. "
+                     "From here the plugin cannot see difyctl or its sign-in on their computer, a Dify on "
+                     "their localhost or home/office network, or their browser. Use a Dify reachable from the "
+                     "internet (Dify Cloud or a public URL), or run Claude Code on their own computer.")
+            if reasons else None}
+
+
+def is_private_host(host):
+    import ipaddress
+    host = (host or "").strip("[]").lower()
+    if host in LOOPBACK_HOSTS or host.endswith(".local") or host.endswith(".internal") or "." not in host:
+        return True
+    try:
+        ip = ipaddress.ip_address(host)
+        return ip.is_private or ip.is_loopback or ip.is_link_local
+    except ValueError:
+        return False
+
+
+def cmd_where(a):
+    out(runtime_env())
+
+
 # ---------- commands: setup ----------
 
 def cmd_detect(a):
@@ -210,6 +254,16 @@ def cmd_detect(a):
             "sso_enforced": (fs.get("sso_enforced_for_signin") or False),
         },
     }
+    env = runtime_env()
+    result["runtime"] = env
+    if env["remote"] and is_private_host(host) and not result["openapi"] and not result["console_reachable"]:
+        result["path"] = None
+        result["next"] = ("this session runs in a cloud sandbox, and " + host + " is a local or private address on the "
+                          "user's computer or network, which the sandbox cannot reach. Do not ask the user to sign in "
+                          "again or reinstall anything. Tell them to run Claude Code on their own computer for this "
+                          "server, or use Dify Cloud / a Dify with a public URL here.")
+        out(result)
+        return
     if result["openapi"]:
         result["path"] = "difyctl"
         result["next"] = "use the difyctl skill: difyctl login --server <server> --no-browser --no-wait"
@@ -533,6 +587,7 @@ def main():
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     s = p.add_subparsers(dest="cmd", required=True)
     x = s.add_parser("detect"); x.add_argument("server")
+    s.add_parser("where")
     x = s.add_parser("device-url"); x.add_argument("server"); x.add_argument("verification_uri")
     x = s.add_parser("login"); x.add_argument("server", nargs="?"); x.add_argument("--method", choices=["browser", "password", "email-code"], default="browser"); x.add_argument("--timeout", type=int, default=600)
     s.add_parser("logout"); s.add_parser("whoami"); s.add_parser("workspaces")
@@ -551,7 +606,7 @@ def main():
     x = s.add_parser("kb-key"); x.add_argument("--alias", default="kb")
     x = s.add_parser("webapp"); x.add_argument("app_id"); g = x.add_mutually_exclusive_group(); g.add_argument("--enable", action="store_true"); g.add_argument("--disable", action="store_true")
     a = p.parse_args()
-    handlers = {"detect": cmd_detect, "device-url": cmd_device_url, "login": cmd_login, "logout": cmd_logout, "whoami": cmd_whoami,
+    handlers = {"detect": cmd_detect, "where": cmd_where, "device-url": cmd_device_url, "login": cmd_login, "logout": cmd_logout, "whoami": cmd_whoami,
                 "workspaces": cmd_workspaces, "use-workspace": cmd_use_workspace, "models": cmd_models,
                 "datasets": cmd_datasets, "apps": cmd_apps, "import": cmd_import, "check-deps": cmd_check_deps,
                 "run-draft": cmd_run_draft, "test-draft": cmd_test_draft, "runs": cmd_runs, "run-detail": cmd_run_detail,

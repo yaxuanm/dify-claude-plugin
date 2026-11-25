@@ -1,6 +1,6 @@
 # Dify Claude Code 插件：安装、测试与上架说明
 
-状态：v0.5.4 原型，尚未提交任何官方目录。
+状态：v0.5.5 原型，尚未提交任何官方目录。
 
 ## 一、插件能做什么
 
@@ -15,6 +15,8 @@
 | `/dify:connect-app` | 把已发布应用接成 Claude Code 可调用的工具（应用自带的 MCP 服务） |
 | `/dify:doctor` | 自检：difyctl 版本、走哪条路、是否登录、当前工作区、可用模型、已存的 Key（打码），并列出要修的问题 |
 | `difyctl` skill | Dify 官方 difyctl skill，原样打包 |
+
+> **要在自己电脑上的 Claude Code 里用。** 如果在云端会话里装（网页版 Claude Code，或从桌面、手机 App 开的云端会话），插件跑在远程沙盒里，看不到你电脑上的 difyctl、登录状态和本机的 Dify，只能连 Dify Cloud 或有公网地址的 Dify。`/dify:setup` 和 `/dify:doctor` 检测到云端会话时会先直接说明，不会再让你重新登录。
 
 ## 二、两条路是怎么自动选的
 
